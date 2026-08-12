@@ -130,5 +130,34 @@ npm run dev
 
 ## 배포
 
-`autokca.com`은 이미 Vercel 네임서버를 쓰고 A 레코드도 Vercel을 가리킨다(확인: 2026-08-10).
-**DNS 작업 없이** Vercel 프로젝트에 도메인만 지정하면 된다.
+저장소: https://github.com/jooyong319-png/autokca
+
+1. **Vercel → Add New → Project → 이 저장소 Import**
+   - 프레임워크는 Next.js로 자동 감지된다. 빌드 설정을 손댈 필요 없다
+2. **환경변수 3개 등록** (Production + Preview 둘 다)
+   | 이름 | 값 |
+   |---|---|
+   | `NEXT_PUBLIC_SITE_URL` | `https://autokca.com` |
+   | `SUPABASE_URL` | `.env.local`에서 복사 |
+   | `SUPABASE_SERVICE_ROLE_KEY` | `.env.local`에서 복사 (`sb_secret_…`) |
+   > 🔴 `NEXT_PUBLIC_SITE_URL`은 **빌드 시각에 박힌다.** 나중에 추가하면 **재배포해야** 반영된다.
+   > 빠뜨리면 사이트는 멀쩡히 뜨는데 canonical·사이트맵·OG가 전부 localhost를 가리킨다 —
+   > 눈으로는 안 보이고 검색엔진에만 안 잡힌다
+3. **Settings → Domains 에 `autokca.com` 추가**
+   - `autokca.com`은 이미 Vercel 네임서버를 쓰고 A 레코드도 Vercel을 가리킨다(확인: 2026-08-10).
+     **DNS 작업이 필요 없다**
+4. **배포 확인**
+   ```bash
+   npm run check:deploy https://autokca.com
+   ```
+   라우트 · 환경변수 반영 · 집계 연결 · 한글 슬러그 · 구조화 데이터 · soft-404 ·
+   OG 이미지 · 보안 헤더를 한 번에 본다
+5. **OG 이미지는 눈으로 확인한다** — 폰트가 안 먹으면 한글 대신 `OTTOKE?!`만 나온다
+   - `https://autokca.com/opengraph-image`
+   - `https://autokca.com/q/축의금-5만원/opengraph-image`
+
+### 프리뷰 배포
+
+프리뷰는 **살려 두고 색인만 막는다**(`X-Robots-Tag: noindex`).
+프로덕션의 `*.vercel.app` 별칭만 정규 도메인으로 301한다 —
+조건 없이 걸면 브랜치 프리뷰까지 프로덕션으로 날아가 미리보기가 무용지물이 된다.
