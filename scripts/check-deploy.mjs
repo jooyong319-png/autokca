@@ -156,6 +156,17 @@ for (const p of ['/opengraph-image', `/q/${encodeURIComponent('축의금-5만원
 console.log(info('한글이 실제로 그려졌는지는 눈으로 봐야 합니다 —'));
 console.log(info('폰트가 안 먹으면 한글 대신 "OTTOKE?!"만 있는 폴백이 나갑니다.'));
 
+/* ── 5-2. 검색엔진 소유 확인 ─────────────────────── */
+console.log('\n검색엔진 소유 확인');
+{
+  const html = await (await get('/')).text();
+  const g = /name="google-site-verification"/.test(html);
+  const n = /name="naver-site-verification"/.test(html);
+  console.log(g ? ok('google-site-verification') : info('google-site-verification 없음 (GSC 등록 전)'));
+  console.log(n ? ok('naver-site-verification') : info('naver-site-verification 없음 (네이버 등록 전)'));
+  if (!n) console.log(info('한국 서비스라 네이버 비중이 큽니다. 구글만 하고 끝내지 마세요.'));
+}
+
 /* ── 6. 보안 헤더 ───────────────────────────────── */
 console.log('\n헤더');
 {

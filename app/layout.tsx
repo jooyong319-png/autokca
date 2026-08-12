@@ -19,6 +19,22 @@ export const metadata: Metadata = {
     description: SITE.description,
     url: SITE.url,
   },
+  /* 검색엔진 소유 확인 — **코드를 고치지 않고 환경변수만 추가**하면 된다.
+   *
+   *  Vercel에 GOOGLE_SITE_VERIFICATION / NAVER_SITE_VERIFICATION을 넣고 재배포하면
+   *  meta 태그가 생긴다. HTML에 그대로 노출되는 값이라 비밀이 아니고,
+   *  서버에서 메타데이터를 만들 때 읽으므로 NEXT_PUBLIC_ 접두사가 필요 없다.
+   *
+   *  ⚠️ 한국 서비스라 **네이버 비중이 크다**. 구글만 하고 끝내지 말 것. */
+  verification: {
+    ...(process.env.GOOGLE_SITE_VERIFICATION
+      ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+      : {}),
+    ...(process.env.NAVER_SITE_VERIFICATION
+      ? { other: { 'naver-site-verification': process.env.NAVER_SITE_VERIFICATION } }
+      : {}),
+  },
+
   /* 기본 팔레트는 라이트다. 다크는 CSS가 OS 설정을 따라간다. */
   other: { 'format-detection': 'telephone=no' },
 };

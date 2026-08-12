@@ -126,7 +126,15 @@ npm run dev
 - [ ] `NEXT_PUBLIC_SITE_URL` (없으면 canonical·사이트맵·OG가 localhost를 가리킨다)
 - [ ] Supabase 환경변수
 - [ ] `assets/og-korean.ttf`
-- [ ] GSC·네이버 서치어드바이저 등록 + 사이트맵 제출
+- [ ] **GSC·네이버 서치어드바이저 등록 + 사이트맵 제출**
+      소유 확인은 **코드를 고치지 않는다.** Vercel 환경변수에 코드만 넣고 재배포하면
+      meta 태그가 생긴다:
+      | 이름 | 어디서 받나 |
+      |---|---|
+      | `GOOGLE_SITE_VERIFICATION` | Search Console → 속성 추가 → HTML 태그 방식의 `content` 값 |
+      | `NAVER_SITE_VERIFICATION` | 서치어드바이저 → 사이트 등록 → HTML 태그 방식의 `content` 값 |
+      - 사이트맵 주소는 `https://autokca.com/sitemap.xml` (URL 117개)
+      - 🔴 **한국 서비스라 네이버 비중이 크다.** 구글만 하고 끝내지 말 것
 
 ## 배포
 
