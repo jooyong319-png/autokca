@@ -154,6 +154,13 @@ npm run dev
 3. **Settings → Domains 에 `autokca.com` 추가**
    - `autokca.com`은 이미 Vercel 네임서버를 쓰고 A 레코드도 Vercel을 가리킨다(확인: 2026-08-10).
      **DNS 작업이 필요 없다**
+   - 🔴 **apex를 Primary로 둔다.** Vercel은 `www`를 정본으로 잡는 경우가 있는데
+     (2026-08-12 실제로 그렇게 됐다), 그러면 `NEXT_PUBLIC_SITE_URL`과 어긋나
+     canonical·사이트맵·**OG 이미지 URL이 전부 308**이 된다.
+     카카오톡·페이스북은 이미지 리다이렉트를 안 따라가는 경우가 있어 **공유 카드가 안 뜬다** —
+     공유가 주 유입 경로인 사이트에서 제일 아픈 실패다.
+     www를 정본으로 쓰고 싶으면 `NEXT_PUBLIC_SITE_URL`을 www 주소로 바꾸고 재배포한다.
+     **무엇을 골라도 환경변수와 실제 도메인이 같아야 한다**
 4. **배포 확인**
    ```bash
    npm run check:deploy https://autokca.com

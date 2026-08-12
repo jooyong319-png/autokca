@@ -29,6 +29,38 @@ const get = (path, init) =>
 
 console.log(`\n${host} 점검\n`);
 
+/* ── 0. 🔴 이 주소가 다른 데로 리다이렉트되나 ───────
+   apex↔www가 어긋나면 사이트는 멀쩡히 뜨는데 canonical·사이트맵·**OG 이미지 URL**이
+   전부 308이 된다. 카카오톡·페이스북은 이미지 리다이렉트를 안 따라가는 경우가 있어
+   공유 카드가 안 뜬다 — 공유가 주 유입 경로인 사이트에서 제일 아픈 실패다. */
+{
+  const r = await get('/');
+  if (r.status >= 300 && r.status < 400) {
+    const loc = r.headers?.get('location') ?? '(없음)';
+    let target = '';
+    try {
+      target = new URL(loc).host;
+    } catch {
+      /* 상대 경로면 호스트가 없다 */
+    }
+
+    console.log(bad(`이 주소가 ${r.status}로 리다이렉트됩니다 → ${loc}`));
+    if (target && target !== host) {
+      const apexVsWww = target.replace(/^www\./, '') === host.replace(/^www\./, '');
+      if (apexVsWww) {
+        console.log(info(`apex↔www 불일치입니다. 실제 서비스 도메인은 ${target} 입니다.`));
+        console.log(info('둘 중 하나를 고르세요 —'));
+        console.log(info(`  (1) Vercel → Settings → Domains 에서 ${host} 를 Primary로 바꾼다`));
+        console.log(info(`  (2) NEXT_PUBLIC_SITE_URL 을 https://${target} 로 바꾸고 재배포한다`));
+        console.log(info('무엇을 골라도 **환경변수와 실제 도메인이 같아야** 합니다.'));
+      }
+      console.log(info(`지금 상태를 보려면: npm run check:deploy https://${target}`));
+    }
+    console.log('');
+    process.exit(1);
+  }
+}
+
 /* ── 1. 기본 라우트 ─────────────────────────────── */
 console.log('라우트');
 const routes = ['/', '/q', '/best', '/me', '/about', '/terms', '/privacy', '/robots.txt', '/sitemap.xml'];
@@ -49,7 +81,18 @@ console.log('\n환경변수가 반영됐나');
     console.log(ok(`사이트맵이 ${host}를 가리킨다`));
     console.log(info(`URL ${(xml.match(/<loc>/g) || []).length}개`));
   } else {
-    fail('사이트맵의 도메인이 예상과 다르다', xml.slice(0, 160));
+    const loc = (xml.match(/<loc>([^<]+)<\/loc>/) || [])[1] ?? '';
+    let sitemapHost = '';
+    try {
+      sitemapHost = new URL(loc).host;
+    } catch {
+      /* 파싱 실패 */
+    }
+    fail(
+      `사이트맵이 ${sitemapHost || '다른 도메인'}을 가리킨다 (여기는 ${host})`,
+      'NEXT_PUBLIC_SITE_URL과 실제 서비스 도메인이 어긋났습니다. '
+        + 'canonical·사이트맵·OG 이미지 URL이 전부 리다이렉트를 타게 됩니다.',
+    );
   }
 
   const home = await (await get('/')).text?.() ?? '';
