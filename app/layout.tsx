@@ -54,9 +54,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <WebSiteJsonLd />
         <div className="stage">
           <header className="masthead">
-            <a className="wordmark" href="/">
-              오또케<em>?!</em>
-            </a>
+            {/* 로고 줄만 sticky — 무한 스크롤로 내려가도 사이트 정체가 남는다(2차 §6-4).
+                태그라인까지 고정하면 화면을 잡아먹는다. */}
+            <div className="masthead-bar">
+              <a className="wordmark" href="/">
+                오또케<em>?!</em>
+              </a>
+            </div>
             <span className="masthead-tagline">{SITE.tagline}</span>
           </header>
 

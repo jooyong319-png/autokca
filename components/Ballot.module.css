@@ -1,14 +1,16 @@
 /* 투표용지 한 장. 기표 → 개표가 한 카드 안에서 일어난다. */
 
+/* 여백을 20~30% 줄였다(2차 §6-3) — 늘어져 보이던 카드가 조여지고
+   한 화면에 들어오는 카드 수가 늘어난다. */
 .ballot {
   background: var(--paper);
   color: var(--ink);
   border: 1px solid var(--paper-edge);
   box-shadow: var(--shadow);
-  padding: 1.6rem 1.5rem 1.5rem;
+  padding: 1.2rem 1.35rem 1.15rem;
   display: flex;
   flex-direction: column;
-  gap: 1.15rem;
+  gap: 0.85rem;
 }
 
 /* 도장이 찍히면 용지가 눌린다 */
@@ -119,24 +121,72 @@
 }
 .choice:hover:not(:disabled) .box { background: var(--sunken); }
 
-/* 🔴 첫 방문자는 오른쪽 빈 칸이 도장 자리인 걸 모른다(개선문서 §3-1).
-   hover·focus에서 도장을 반투명으로 미리 보여주면 그것만으로 대부분 해결된다.
-   `.sealOn`(이미 찍힌 도장)은 건드리지 않는다 — 아래 규칙보다 뒤에 와야 이긴다. */
-.choice:hover:not(:disabled) .seal:not(.sealOn),
-.choice:focus-visible:not(:disabled) .seal:not(.sealOn) {
-  opacity: 0.3;
-  transform: scale(1) rotate(-7deg);
-  transition: opacity 0.12s ease, transform 0.12s ease;
-}
+/* 🔴 빈 도장 칸이 데스크톱 허전함의 가장 큰 원인이었다(2차 §4).
+   표가 잘못 렌더된 것처럼 보이고, 첫 방문자는 투표 전 상태만 보므로 그게 첫인상이 된다.
 
-/* 표 위에 놓이는 안내 — "여기를 누르면 된다"를 말로도 한 번 */
+   그래서 **점선 원 플레이스홀더**를 놓는다 — 여기가 도장 자리라는 걸 형태로 말한다.
+   hover·focus에서 진해지고, 찍히면 실선 인주색으로 바뀐다.
+   빈칸 해소와 클릭 가능성 전달이 한 번에 해결된다. */
+.slot {
+  width: 44px;
+  height: 44px;
+  border: 1.5px dashed var(--rule-strong);
+  border-radius: 50%;
+  color: var(--ink-faint);
+  font-family: var(--f-doc);
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.5;
+  transition: opacity 0.12s ease, border-color 0.12s ease;
+}
+.slot span { opacity: 0.3; }
+.choice:hover:not(:disabled) .slot,
+.choice:focus-visible:not(:disabled) .slot {
+  opacity: 0.9;
+  border-color: var(--seal);
+  color: var(--seal);
+}
+.choice:hover:not(:disabled) .slot span,
+.choice:focus-visible:not(:disabled) .slot span { opacity: 0.75; }
+
+/* 이미 투표한 칸(도장이 찍힌 쪽)에는 플레이스홀더를 그리지 않는다 */
+.slotHidden { display: none; }
+
+/* 안내 — 점선 원이 시각으로 말해 주므로 문구는 더 작고 조용하게(2차 §4) */
 .hint {
   margin: 0;
   font-family: var(--f-mono);
-  font-size: 0.66rem;
+  font-size: 0.62rem;
   letter-spacing: 0.1em;
   color: var(--ink-faint);
+  opacity: 0.75;
 }
+
+/* 🔴 카드 정보량 부족이 허전함의 원인 2였다(2차 §5).
+   참여자 수는 **임계치와 무관하게 항상** 보여준다 — 감출 것은 퍼센트지 참여 규모가 아니다.
+   댓글 수는 상세로 넘어갈 동기다. 댓글은 체류시간이자 SEO 본문이라 상세 유입이 곧 성장이다. */
+.stats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  font-family: var(--f-mono);
+  font-size: 0.68rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+.stats b { color: var(--ink-soft); font-weight: 700; }
+.statLink {
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+}
+.statLink:hover { color: var(--seal); border-bottom-color: var(--seal); }
+.statDot { color: var(--rule-strong); }
 .choice:disabled { cursor: default; }
 
 /* 기표 도장 — 원 안에 「오」.
@@ -172,7 +222,7 @@
 .tally {
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 0.7rem;
 }
 .tallyHead {
   font-family: var(--f-doc);

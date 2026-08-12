@@ -24,6 +24,9 @@ interface Props {
   standalone?: boolean;
   /** 상세 페이지에서 아래 피드의 첫 질문 슬러그. 같은 화면 안이라 앵커로 보낸다. */
   nextSlug?: string;
+  /** 이 질문의 댓글 수. 카드에서 상세로 넘어갈 동기다(2차 §5) —
+   *  댓글은 체류시간이자 SEO 본문이라 상세 유입이 곧 사이트 성장이다. */
+  commentCount?: number;
 }
 
 const VOTED_KEY = 'ottoke:voted';
@@ -53,6 +56,7 @@ export function Ballot({
   heading = 'h1',
   standalone = false,
   nextSlug,
+  commentCount = 0,
 }: Props) {
   const [tally, setTally] = useState<Tally>(initial);
   const [choice, setChoice] = useState<Choice | null>(null);
@@ -228,6 +232,14 @@ export function Ballot({
           >
             <span className={styles.name}>{question[key]}</span>
             <span className={styles.box}>
+              {/* 🔴 빈 칸이 "표가 깨진 것처럼" 보이던 문제(2차 §4).
+                  점선 원으로 도장 자리를 표시한다. 도장이 찍히면 감춘다. */}
+              <span
+                className={`${styles.slot} ${choice === key ? styles.slotHidden : ''}`}
+                aria-hidden="true"
+              >
+                <span>오</span>
+              </span>
               {/* 관공서 기표 부호(卜)가 아니라 브랜드 글자 「오」다 */}
               <span
                 className={`${styles.seal} ${choice === key ? styles.sealOn : ''}`}
@@ -239,6 +251,24 @@ export function Ballot({
           </button>
         ))}
       </div>
+
+      {/* 🔴 참여자 수는 **임계치와 무관하게 항상** 보여준다(2차 §5).
+          감출 것은 퍼센트지 참여 규모가 아니다. 0표면 아무것도 안 그린다. */}
+      {(total > 0 || commentCount > 0) && (
+        <p className={styles.stats}>
+          {total > 0 && (
+            <span>
+              <b>{total.toLocaleString('ko-KR')}명</b> 참여
+            </span>
+          )}
+          {total > 0 && commentCount > 0 && <span className={styles.statDot}>·</span>}
+          {commentCount > 0 && (
+            <a className={styles.statLink} href={`/q/${encodeURIComponent(question.slug)}`}>
+              왜 그런지 <b>{commentCount}</b>
+            </a>
+          )}
+        </p>
+      )}
 
       {hasResult ? (
         <div className={styles.tally}>

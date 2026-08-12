@@ -49,6 +49,8 @@
   --ink-soft:   #55504a;
   --ink-faint:  #8a837a;
   --rule:       #d8d2c5;
+  /* 점선 도장 자리처럼 선이 또렷해야 하는 곳 */
+  --rule-strong: #bdb5a4;
   --sunken:     #f1eee6;
 
   /* 인주 — 브랜드색이다 */
@@ -79,6 +81,7 @@
     --ink-soft:   #4e4941;
     --ink-faint:  #776f65;
     --rule:       #c6bfb1;
+    --rule-strong: #a79e8c;
     --sunken:     #dcd7cb;
     --seal:       #b32b26;
     --seal-soft:  #efddd9;
@@ -96,6 +99,7 @@
   --ink-soft:   #4e4941;
   --ink-faint:  #776f65;
   --rule:       #c6bfb1;
+  --rule-strong: #a79e8c;
   --sunken:     #dcd7cb;
   --seal:       #b32b26;
   --seal-soft:  #efddd9;
@@ -154,10 +158,11 @@ body::before {
     linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
 }
 
-/* 투표용지는 좁고 길다. 560 → 620px으로만 넓힌다(§3-2) —
-   더 넓히면 질문 한 줄이 길어져 모바일 리듬과 어긋난다. */
+/* 투표용지는 좁고 길다. 560 → 620 → **720px**(2차 §6-1).
+   1900px 화면에서 좌우 배경이 65%를 차지하던 문제. 720이면 질문 제목이 한 줄에
+   들어가는 경우가 늘어 리듬도 좋아진다. 그 이상 넓히면 모바일 감각과 어긋난다. */
 .stage {
-  max-width: 620px;
+  max-width: 720px;
   margin: 0 auto;
   padding: 1.6rem 1.1rem 3.5rem;
   display: flex;
@@ -191,11 +196,38 @@ body::before {
    용지가 아니라 방에 붙은 것들이라 --room-ink를 쓴다. */
 
 /* 🔴 태그라인을 우측 상단 작은 회색 글씨에서 로고 아래로 내렸다(§3-3).
-   사이트를 한 줄로 설명하는 문구인데 첫 방문자가 놓치던 자리였다. */
+   사이트를 한 줄로 설명하는 문구인데 첫 방문자가 놓치던 자리였다.
+
+   무한 스크롤로 내려가면 헤더가 사라져 사이트 정체를 알 수 없었다(2차 §6-4).
+   그래서 **로고 줄만 sticky로 고정**한다 — 태그라인까지 붙이면 화면을 잡아먹는다.
+   배경을 --room으로 깔아야 카드가 헤더 아래로 지나갈 때 겹쳐 보이지 않는다. */
 .masthead {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+}
+.masthead-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.55rem 0 0.45rem;
+  margin: -0.55rem 0 0;
+  background: var(--room);
+  border-bottom: 1px solid transparent;
+}
+/* 스크롤이 시작되면 경계선을 드러낸다 — 항상 켜 두면 첫 화면이 답답하다 */
+@supports (animation-timeline: scroll()) {
+  .masthead-bar {
+    animation: sticky-edge linear both;
+    animation-timeline: scroll();
+    animation-range: 0 80px;
+  }
+  @keyframes sticky-edge {
+    to { border-bottom-color: var(--rule); }
+  }
 }
 .wordmark {
   font-size: 1.32rem;

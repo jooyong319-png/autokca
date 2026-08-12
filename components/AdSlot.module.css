@@ -1,0 +1,18 @@
+/* 광고도 질문 카드와 같은 재질로 — 리듬이 깨지면 스크롤이 멈춘다(2차 §3). */
+.card {
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--paper-edge);
+  padding: 0.8rem 1rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-height: 6rem;
+}
+/* 광고임을 밝힌다 — 콘텐츠로 오인되면 정책 위반이고, 신뢰도 깎인다 */
+.label {
+  font-family: var(--f-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  color: var(--ink-faint);
+}

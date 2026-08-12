@@ -4,7 +4,7 @@ import { Ballot } from '@/components/Ballot';
 import { Comments } from '@/components/Comments';
 import { Feed, type FeedItem } from '@/components/Feed';
 import { BreadcrumbJsonLd, DiscussionJsonLd } from '@/components/JsonLd';
-import { commentCounts, listComments, topComment } from '@/lib/comments';
+import { commentCounts, listComments, readAllCommentCounts, topComment } from '@/lib/comments';
 import { QUESTIONS, docNumber, feedOrder, questionBySlug, topicBySlug } from '@/lib/questions';
 import { pageDescription, pageTitle } from '@/lib/seo';
 import { SITE } from '@/lib/site';
@@ -79,7 +79,10 @@ export default async function QuestionPage({ params }: Params) {
   ]);
 
   const topic = topicBySlug(question.topic);
-  const tallies = await readAllTallies();
+  const [tallies, allCommentCounts] = await Promise.all([
+    readAllTallies(),
+    readAllCommentCounts(),
+  ]);
   const order = feedOrder(question.id, id => {
     const t = tallies.get(id);
     return t ? t.a + t.b : 0;
@@ -89,6 +92,7 @@ export default async function QuestionPage({ params }: Params) {
       question: q,
       docNo: docNumber(q),
       tally: await readTally(q.id),
+      commentCount: allCommentCounts.get(q.id) ?? 0,
     })),
   );
 
@@ -110,6 +114,7 @@ export default async function QuestionPage({ params }: Params) {
         tally={tally}
         standalone
         nextSlug={seed[0]?.question.slug}
+        commentCount={counts.a + counts.b}
       />
 
       {/* 댓글이 곧 본문이다(브리프 §6) — 전용 페이지에만 붙인다 */}

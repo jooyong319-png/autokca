@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Feed, type FeedItem } from '@/components/Feed';
 import { docNumber, feedOrder } from '@/lib/questions';
 import { SITE } from '@/lib/site';
+import { readAllCommentCounts } from '@/lib/comments';
 import { readAllTallies, readTally } from '@/lib/votes';
 
 /* 득표율이 살아 있는 느낌을 주면서 요청 수도 감당되는 값 */
@@ -32,7 +33,10 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   /* 표를 한 번에 받아 피드 앞자리를 채워진 질문으로 세운다(§5-2).
      질문마다 readTally를 부르면 100번 왕복한다. */
-  const tallies = await readAllTallies();
+  const [tallies, commentCounts] = await Promise.all([
+    readAllTallies(),
+    readAllCommentCounts(),
+  ]);
   const votesOf = (id: string) => {
     const t = tallies.get(id);
     return t ? t.a + t.b : 0;
@@ -43,6 +47,7 @@ export default async function HomePage() {
       question,
       docNo: docNumber(question),
       tally: await readTally(question.id),
+      commentCount: commentCounts.get(question.id) ?? 0,
     })),
   );
 

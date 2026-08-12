@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { docNumber, feedOrder } from '@/lib/questions';
+import { readAllCommentCounts } from '@/lib/comments';
 import { readAllTallies, readTally } from '@/lib/votes';
 
 export const runtime = 'nodejs';
@@ -19,7 +20,10 @@ export async function GET(request: Request) {
   const offset = Math.min(Math.max(Number(params.get('offset') ?? 0) || 0, 0), MAX_OFFSET);
 
   /* 서버 렌더와 같은 순서여야 한다 — 순서가 어긋나면 같은 질문이 두 번 나온다 */
-  const tallies = await readAllTallies();
+  const [tallies, commentCounts] = await Promise.all([
+    readAllTallies(),
+    readAllCommentCounts(),
+  ]);
   const order = feedOrder(exclude, id => {
     const t = tallies.get(id);
     return t ? t.a + t.b : 0;
@@ -31,6 +35,7 @@ export async function GET(request: Request) {
       question,
       docNo: docNumber(question),
       tally: await readTally(question.id),
+      commentCount: commentCounts.get(question.id) ?? 0,
     })),
   );
 

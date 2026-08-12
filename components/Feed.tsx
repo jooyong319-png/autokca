@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import type { Question } from '@/lib/questions';
 import type { Tally } from '@/lib/votes';
+import { AdSlot } from './AdSlot';
 import { Ballot } from './Ballot';
 import styles from './Feed.module.css';
 
@@ -10,6 +11,8 @@ export interface FeedItem {
   question: Question;
   docNo: string;
   tally: Tally;
+  /** 카드에 "왜 그런지 N"으로 뜬다 — 상세로 넘어갈 동기(2차 §5) */
+  commentCount: number;
 }
 
 interface Props {
@@ -78,14 +81,19 @@ export function Feed({ initial, excludeId, startOffset }: Props) {
 
   return (
     <>
-      {items.map(item => (
-        <Ballot
-          key={item.question.id}
-          question={item.question}
-          docNo={item.docNo}
-          tally={item.tally}
-          heading="h2"
-        />
+      {items.map((item, i) => (
+        <Fragment key={item.question.id}>
+          <Ballot
+            question={item.question}
+            docNo={item.docNo}
+            tally={item.tally}
+            commentCount={item.commentCount}
+            heading="h2"
+          />
+          {/* 카드 4개마다 광고 하나. 그 이상은 화면 대비 광고 비율 정책에 걸린다(2차 §3).
+              환경변수가 없으면 AdSlot이 null을 돌려주므로 빈 상자가 생기지 않는다. */}
+          {(i + 1) % 4 === 0 && <AdSlot />}
+        </Fragment>
       ))}
 
       {!done && (
