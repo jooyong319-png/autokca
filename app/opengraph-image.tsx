@@ -1,7 +1,5 @@
-import { LatinFallbackCard, QuestionCard } from '@/lib/ogCard';
+import { LatinFallbackCard, SiteCard } from '@/lib/ogCard';
 import { OG_CACHE, OG_SIZE, koreanFont } from '@/lib/ogFont';
-import { docNumber, leadQuestion } from '@/lib/questions';
-import { readTally } from '@/lib/votes';
 
 export const runtime = 'nodejs';
 
@@ -14,20 +12,16 @@ export const alt = '오또케 — 이거 나만 그래?';
 export const size = OG_SIZE;
 export const contentType = 'image/png';
 
+/* 🔴 홈은 **사이트 대표 카드**를 낸다. 첫 질문을 그리면 홈이 그 질문 페이지처럼 보이고,
+   브랜드 공유에서 사이트 정체가 전달되지 않는다(개선문서 §4-1). */
 export default async function Image() {
   const { ImageResponse } = await import('next/og');
   const font = await koreanFont();
   if (!font) return new ImageResponse(<LatinFallbackCard />, { ...size, headers: OG_CACHE });
 
-  const question = leadQuestion();
-  const tally = await readTally(question.id);
-
-  return new ImageResponse(
-    <QuestionCard question={question} tally={tally} docNo={docNumber(question)} />,
-    {
-      ...size,
-      headers: OG_CACHE,
-      fonts: [{ name: 'OGKorean', data: font, weight: 700, style: 'normal' }],
-    },
-  );
+  return new ImageResponse(<SiteCard />, {
+    ...size,
+    headers: OG_CACHE,
+    fonts: [{ name: 'OGKorean', data: font, weight: 700, style: 'normal' }],
+  });
 }

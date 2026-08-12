@@ -77,6 +77,66 @@ export function LatinFallbackCard() {
   );
 }
 
+/** 사이트 대표 카드 — 홈 전용.
+ *
+ *  🔴 홈 OG에 첫 질문을 그리면 홈이 그 질문 페이지처럼 보인다(개선문서 §4-1).
+ *  브랜드 검색·브랜드 공유에서 사이트가 무엇인지 전달되지 않는다.
+ *  질문별 카드는 `/q/[slug]`가 담당한다. */
+export function SiteCard() {
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        padding: 56,
+        background: ROOM,
+        fontFamily: 'OGKorean',
+      }}
+    >
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 22,
+          background: PAPER,
+          border: '1px solid #dcd6c9',
+        }}
+      >
+        <Seal size={150} />
+        <div
+          style={{
+            display: 'flex',
+            fontSize: 92,
+            fontWeight: 700,
+            letterSpacing: '-0.05em',
+            color: INK,
+          }}
+        >
+          오또케<span style={{ color: SEAL }}>?!</span>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            fontSize: 40,
+            fontWeight: 700,
+            letterSpacing: '-0.03em',
+            color: SEAL,
+          }}
+        >
+          이거 나만 그래?
+        </div>
+        <div style={{ display: 'flex', fontSize: 26, color: '#8a837a' }}>
+          한 줄 질문에 투표하고 결과를 바로 확인 · {domainLabel()}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** 질문 카드 — 질문 / 비율 / 참여자 수 / 워터마크 */
 export function QuestionCard({
   question,
@@ -140,6 +200,8 @@ export function QuestionCard({
             color: INK,
             lineHeight: 1.32,
             letterSpacing: '-0.04em',
+            /* 화면과 같은 한국어 줄바꿈 규칙(§1-1). 없으면 "축의금 5 / 만원"으로 끊긴다. */
+            wordBreak: 'keep-all',
           }}
         >
           {question.q}

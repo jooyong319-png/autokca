@@ -111,14 +111,53 @@ body {
   font-family: var(--f-sans);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+
+  /* 🔴 한국어 줄바꿈. 기본값은 영문 규칙이라 "축의금 5 / 만원이면"처럼
+     숫자와 단위 사이를 끊는다. keep-all은 어절 단위로만 끊는다.
+     제목만이 아니라 **사이트 전체**에 걸어야 한다 — 댓글·카피·결과 문구 전부. */
+  word-break: keep-all;
+  /* keep-all만 두면 끊을 곳 없는 긴 문자열(URL 등)이 컨테이너를 밀어낸다 */
+  overflow-wrap: break-word;
 }
+
+/* 숫자+단위처럼 절대 끊기면 안 되는 덩어리 */
+.nowrap { white-space: nowrap; }
 
 a { color: inherit; }
 h1, h2, h3 { margin: 0; line-height: 1.3; letter-spacing: -0.03em; }
 
-/* 투표용지는 좁고 길다 */
+/* 🔴 서류철 위에 놓인 종이 — 데스크톱에서 좌우가 70% 비던 문제(개선문서 §3-2).
+   사이드바를 넣지 않는다. 무한 스크롤의 리듬이 깨진다.
+   대신 배경에 옅은 괘선 격자만 깔아 "서류" 맥락을 만든다.
+   16px 격자, 불투명도를 아주 낮게 — 눈에 띄면 실패다. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(22, 21, 20, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(22, 21, 20, 0.045) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) body::before {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  }
+}
+:root[data-theme='dark'] body::before {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+}
+
+/* 투표용지는 좁고 길다. 560 → 620px으로만 넓힌다(§3-2) —
+   더 넓히면 질문 한 줄이 길어져 모바일 리듬과 어긋난다. */
 .stage {
-  max-width: 560px;
+  max-width: 620px;
   margin: 0 auto;
   padding: 1.6rem 1.1rem 3.5rem;
   display: flex;
@@ -151,12 +190,12 @@ h1, h2, h3 { margin: 0; line-height: 1.3; letter-spacing: -0.03em; }
 /* ─── 기표소 밖: 머리글과 푸터 ─────────────────────────────
    용지가 아니라 방에 붙은 것들이라 --room-ink를 쓴다. */
 
+/* 🔴 태그라인을 우측 상단 작은 회색 글씨에서 로고 아래로 내렸다(§3-3).
+   사이트를 한 줄로 설명하는 문구인데 첫 방문자가 놓치던 자리였다. */
 .masthead {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
+  flex-direction: column;
+  gap: 0.15rem;
 }
 .wordmark {
   font-size: 1.32rem;
@@ -166,12 +205,11 @@ h1, h2, h3 { margin: 0; line-height: 1.3; letter-spacing: -0.03em; }
   text-decoration: none;
 }
 .wordmark em { font-style: normal; color: var(--seal); }
-.masthead-date {
-  font-family: var(--f-mono);
-  font-size: 0.7rem;
-  color: var(--room-faint);
-  letter-spacing: 0.04em;
-  font-variant-numeric: tabular-nums;
+.masthead-tagline {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--seal);
 }
 
 /* 용지와 같은 재질의 작은 쪽지 — 부록 정보용 */

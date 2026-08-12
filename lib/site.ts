@@ -38,15 +38,8 @@ export const SITE = {
   effectiveDate: '2026-08-11',
 } as const;
 
-/** 참여자 수를 공개하기 시작하는 최소 표 수.
- *  이 밑에서는 비율만 보여준다 — "7명이 투표했습니다"는 안 하는 게 낫다. */
-export const TURNOUT_THRESHOLD = 100;
-
-/** thin content 방어선(브리프 §6).
- *  투표·댓글이 이만큼 쌓이기 전에는 `noindex`로 둔다 —
- *  수치만 있는 빈 페이지가 대량 색인되면 사이트 전체 평가가 내려간다. */
-export const INDEX_MIN_VOTES = 30;
-export const INDEX_MIN_COMMENTS = 3;
+/* 표본 임계치는 `lib/tiers.ts`에 있다.
+   여기에도 두면 두 곳이 어긋난다 — 실제로 TURNOUT_THRESHOLD가 새 체계와 겹쳐 있었다. */
 
 /** 처리위탁 현황 — 개인정보처리방침이 그대로 참조한다.
  *  ⚠️ 실제로 붙이는 업체·리전이 바뀌면 **여기와 방침을 같이** 고쳐야 한다. */

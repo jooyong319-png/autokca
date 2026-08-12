@@ -311,11 +311,30 @@ export function byKind(kind: Kind): Question[] {
  *  **다음 자리에 병맛을 배치**해서 한 번 더 누르게 만든다. 진지만 이어지면 무겁고,
  *  병맛만 이어지면 가볍다. 그래서 **진지 1 : 병맛 2**로 번갈아 짠다.
  *
+ *  `votesOf`를 넘기면 **각 갈래 안에서 표가 많은 순**으로 세운다(개선문서 §5-2).
+ *  0표 질문이 첫 화면에 오면 죽은 사이트로 보인다 — 초기에는 이게 첫인상을 좌우한다.
+ *  진지/병맛 리듬은 유지하면서 각 갈래의 앞자리만 채워진 질문으로 바꾸는 것이다.
+ *
  *  @param excludeId 지금 보고 있는 질문 — 피드에서 뺀다
+ *  @param votesOf   질문 id → 총 표 수. 없으면 배열 순서를 그대로 쓴다
  */
-export function feedOrder(excludeId?: string): Question[] {
-  const serious = byKind('serious').filter(q => q.id !== excludeId);
-  const meme = byKind('meme').filter(q => q.id !== excludeId);
+export function feedOrder(
+  excludeId?: string,
+  votesOf?: (id: string) => number,
+): Question[] {
+  const pick = (kind: Kind) => {
+    const list = byKind(kind).filter(q => q.id !== excludeId);
+    if (!votesOf) return list;
+    /* 같은 표 수면 원래 배열 순서를 지킨다 — 매 요청마다 순서가 흔들리면
+       무한 스크롤에서 같은 질문이 두 번 나올 수 있다. */
+    return list
+      .map((q, i) => ({ q, i, v: votesOf(q.id) }))
+      .sort((x, y) => y.v - x.v || x.i - y.i)
+      .map(x => x.q);
+  };
+
+  const serious = pick('serious');
+  const meme = pick('meme');
   const out: Question[] = [];
 
   let s = 0;

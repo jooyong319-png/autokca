@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { WebSiteJsonLd } from '@/components/JsonLd';
+import { TotalVotes } from '@/components/TotalVotes';
 import { SITE } from '@/lib/site';
 import './globals.css';
 
@@ -56,7 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <a className="wordmark" href="/">
               오또케<em>?!</em>
             </a>
-            <span className="masthead-date">{SITE.tagline}</span>
+            <span className="masthead-tagline">{SITE.tagline}</span>
           </header>
 
           {children}
@@ -75,6 +76,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </a>
             </nav>
             <p style={{ margin: 0 }}>
+              <TotalVotes />
               질문은 오또케가 씁니다. 집계는 실제 투표 수이지만{' '}
               <strong>여론조사가 아닙니다</strong> — 스스로 투표한 사람만 집계됩니다.
             </p>

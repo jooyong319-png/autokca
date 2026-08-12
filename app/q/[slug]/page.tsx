@@ -7,9 +7,10 @@ import { BreadcrumbJsonLd, DiscussionJsonLd } from '@/components/JsonLd';
 import { commentCounts, listComments, topComment } from '@/lib/comments';
 import { QUESTIONS, docNumber, feedOrder, questionBySlug, topicBySlug } from '@/lib/questions';
 import { pageDescription, pageTitle } from '@/lib/seo';
-import { INDEX_MIN_COMMENTS, INDEX_MIN_VOTES, SITE } from '@/lib/site';
+import { SITE } from '@/lib/site';
+import { indexable } from '@/lib/tiers';
 import { isConfigured } from '@/lib/supabase';
-import { readTally } from '@/lib/votes';
+import { readAllTallies, readTally } from '@/lib/votes';
 
 export const revalidate = 300;
 
@@ -40,12 +41,12 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     readTally(question.id),
     listComments(question.id, 1),
   ]);
-  const total = tally.a + tally.b;
 
-  /* 🔴 thin content 방어(브리프 §6). 투표·댓글이 적은 페이지를 대량 색인시키면
-     "수치만 있는 빈 페이지"로 평가돼 사이트 전체가 내려간다.
+  /* 🔴 thin content 방어(브리프 §6 · 개선문서 §4-2).
+     기준은 **표 20개 이상 그리고 댓글 1개 이상**이다. 표만 있고 댓글이 없으면
+     본문이 수치 두 줄뿐이라 여전히 빈 페이지다 — 본문을 채우는 건 댓글이다.
      쌓이면 자동으로 색인이 열린다. */
-  const thin = total < INDEX_MIN_VOTES && comments.length < INDEX_MIN_COMMENTS;
+  const thin = !indexable(tally, comments.length);
 
   const canonical = `${SITE.url}/q/${encodeURIComponent(question.slug)}`;
   return {
@@ -78,7 +79,11 @@ export default async function QuestionPage({ params }: Params) {
   ]);
 
   const topic = topicBySlug(question.topic);
-  const order = feedOrder(question.id);
+  const tallies = await readAllTallies();
+  const order = feedOrder(question.id, id => {
+    const t = tallies.get(id);
+    return t ? t.a + t.b : 0;
+  });
   const seed: FeedItem[] = await Promise.all(
     order.slice(0, 2).map(async q => ({
       question: q,
@@ -99,7 +104,13 @@ export default async function QuestionPage({ params }: Params) {
       />
       <DiscussionJsonLd question={question} tally={tally} comments={comments} />
 
-      <Ballot question={question} docNo={docNumber(question)} tally={tally} />
+      <Ballot
+        question={question}
+        docNo={docNumber(question)}
+        tally={tally}
+        standalone
+        nextSlug={seed[0]?.question.slug}
+      />
 
       {/* 댓글이 곧 본문이다(브리프 §6) — 전용 페이지에만 붙인다 */}
       <Comments

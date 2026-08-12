@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { docNumber, feedOrder } from '@/lib/questions';
-import { readTally } from '@/lib/votes';
+import { readAllTallies, readTally } from '@/lib/votes';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -18,7 +18,12 @@ export async function GET(request: Request) {
   const exclude = params.get('exclude') ?? undefined;
   const offset = Math.min(Math.max(Number(params.get('offset') ?? 0) || 0, 0), MAX_OFFSET);
 
-  const order = feedOrder(exclude);
+  /* 서버 렌더와 같은 순서여야 한다 — 순서가 어긋나면 같은 질문이 두 번 나온다 */
+  const tallies = await readAllTallies();
+  const order = feedOrder(exclude, id => {
+    const t = tallies.get(id);
+    return t ? t.a + t.b : 0;
+  });
   const slice = order.slice(offset, offset + PAGE);
 
   const items = await Promise.all(

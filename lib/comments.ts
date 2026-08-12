@@ -131,6 +131,22 @@ export async function commentCounts(
   };
 }
 
+/** 질문별 댓글 수 전체 — 사이트맵이 thin content를 걸러낼 때 쓴다.
+ *  없는 질문은 맵에 안 들어간다(= 0건). */
+export async function readAllCommentCounts(): Promise<Map<string, number>> {
+  const raw = await rpc('all_comment_counts', {}, 300);
+  const out = new Map<string, number>();
+  if (!Array.isArray(raw)) return out;
+  for (const row of raw) {
+    if (!row || typeof row !== 'object') continue;
+    const r = row as Record<string, unknown>;
+    if (typeof r.question_id === 'string' && typeof r.n === 'number') {
+      out.set(r.question_id, r.n);
+    }
+  }
+  return out;
+}
+
 /** 갱신된 공감 수. 실패하면 null. */
 export async function likeComment(id: number): Promise<number | null> {
   const raw = await rpc('like_comment', { cid: id }, false);

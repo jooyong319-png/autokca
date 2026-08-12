@@ -9,6 +9,7 @@
  */
 
 import type { Question } from './questions';
+import { showsResult, stageOf, totalOf } from './tiers';
 import type { Tally } from './votes';
 
 export interface Outcome {
@@ -17,10 +18,12 @@ export interface Outcome {
   total: number;
 }
 
+/** 🔴 여기 한 곳에 임계치를 물려 두면 제목·설명·OG 카드·구조화 데이터가 같이 움직인다.
+ *  표가 적으면 **null을 돌려준다** — 각 호출부가 "결과 없음" 분기를 이미 갖고 있다.
+ *  1표에 100%를 내보내던 사고가 여기서 막힌다. */
 export function outcome(question: Question, tally: Tally): Outcome | null {
-  if (!tally.live) return null;
-  const total = tally.a + tally.b;
-  if (total === 0) return null;
+  if (!showsResult(stageOf(tally))) return null;
+  const total = totalOf(tally);
   const aWins = tally.a >= tally.b;
   return {
     label: aWins ? question.a : question.b,
@@ -34,12 +37,16 @@ export function pageTitle(question: Question, tally: Tally): string {
   return o ? `${question.q} — ${o.percent}%가 "${o.label}"` : question.q;
 }
 
-/** 스니펫에 걸리는 형태로 쓴다 — "응답자 N명 중 P%가 …" */
+/** 스니펫에 걸리는 형태로 쓴다 — "응답자 N명 중 P%가 …"
+ *
+ *  화면은 투표 전에 결과를 감추지만(개선문서 §1-3) **메타는 감추지 않는다.**
+ *  검색결과에 뜨는 숫자가 클릭 이유가 되고, 그건 밴드왜건과 무관하다.
+ *  단 임계치 미만이면 outcome()이 null이라 여기서도 숫자가 안 나간다. */
 export function pageDescription(question: Question, tally: Tally): string {
   const o = outcome(question, tally);
-  if (!o) return `${question.q} 투표하고 다른 사람들 생각을 바로 확인하세요.`;
+  if (!o) return `${question.q} 당신은 어느 쪽인가요? 투표하면 결과가 바로 보입니다.`;
   return (
     `응답자 ${o.total.toLocaleString('ko-KR')}명 중 ${o.percent}%가 "${o.label}"를 골랐습니다. `
-    + `${question.q}`
+    + `${question.q} 당신은 어느 쪽인가요?`
   );
 }

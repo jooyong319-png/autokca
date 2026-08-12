@@ -199,3 +199,20 @@ $$;
 revoke all on function public.all_tallies() from anon, authenticated;
 revoke all on function public.top_comment(text, text) from anon, authenticated;
 revoke all on function public.comment_counts(text) from anon, authenticated;
+
+-- 질문별 댓글 수 한 번에 — 사이트맵이 thin content를 걸러내는 데 쓴다.
+-- 질문마다 comment_counts를 부르면 100번 왕복한다.
+-- ⚠️ PostgREST max-rows 기본 1000. 질문이 1000개를 넘으면 조용히 잘린다.
+create or replace function public.all_comment_counts()
+returns table (question_id text, n integer)
+language sql
+security definer
+set search_path = public
+as $$
+  select c.question_id, count(*)::integer
+  from public.comments c
+  where not c.hidden
+  group by c.question_id;
+$$;
+
+revoke all on function public.all_comment_counts() from anon, authenticated;

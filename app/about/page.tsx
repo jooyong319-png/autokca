@@ -52,6 +52,22 @@ export default function AboutPage() {
         </li>
       </ul>
 
+      <h2>&ldquo;안건&rdquo;과 &ldquo;별건&rdquo;</h2>
+      <p>
+        각 질문 오른쪽 위에 <strong>안건</strong> 또는 <strong>별건</strong>이 붙습니다.
+        기준은 이렇습니다.
+      </p>
+      <ul>
+        <li>
+          <strong>안건</strong> — 실제로 의견이 갈리는 것. 축의금, 층간소음, 주 4일제처럼
+          사람들이 원래 다투던 주제입니다.
+        </li>
+        <li>
+          <strong>별건</strong> — 다툴 일은 아니지만 궁금한 것. 화장실에 휴대폰을 들고 가는지
+          같은 것들입니다. 안건만 이어지면 무겁습니다.
+        </li>
+      </ul>
+
       <h2>집계는 어떻게 하나</h2>
       <p>
         표시되는 득표율은 <strong>실제 투표 수를 그대로 계산한 값</strong>입니다. 보정하거나

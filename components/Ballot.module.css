@@ -118,6 +118,25 @@
   justify-content: center;
 }
 .choice:hover:not(:disabled) .box { background: var(--sunken); }
+
+/* 🔴 첫 방문자는 오른쪽 빈 칸이 도장 자리인 걸 모른다(개선문서 §3-1).
+   hover·focus에서 도장을 반투명으로 미리 보여주면 그것만으로 대부분 해결된다.
+   `.sealOn`(이미 찍힌 도장)은 건드리지 않는다 — 아래 규칙보다 뒤에 와야 이긴다. */
+.choice:hover:not(:disabled) .seal:not(.sealOn),
+.choice:focus-visible:not(:disabled) .seal:not(.sealOn) {
+  opacity: 0.3;
+  transform: scale(1) rotate(-7deg);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+/* 표 위에 놓이는 안내 — "여기를 누르면 된다"를 말로도 한 번 */
+.hint {
+  margin: 0;
+  font-family: var(--f-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
 .choice:disabled { cursor: default; }
 
 /* 기표 도장 — 원 안에 「오」.

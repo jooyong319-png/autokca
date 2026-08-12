@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Question } from '@/lib/questions';
 import type { Tally } from '@/lib/votes';
-import { SITE, TURNOUT_THRESHOLD } from '@/lib/site';
+import { SITE } from '@/lib/site';
+import { resultNotice, showsResult, showsVerdict, stageOf, totalOf } from '@/lib/tiers';
 import { useVoteState } from './voteState';
 import styles from './Ballot.module.css';
 
@@ -15,6 +16,14 @@ interface Props {
   tally: Tally;
   /** 피드 안에서는 h2로 — 한 페이지에 h1이 여러 개면 안 된다 */
   heading?: 'h1' | 'h2';
+  /** 이 질문의 전용 페이지인가.
+   *
+   *  🔴 true면 "이 질문만 보기"를 감춘다 — 이미 그 페이지인데 자기 자신을 가리키고 있었다.
+   *  대신 `nextSlug`로 다음 질문으로 보낸다. 검색 유입은 대부분 상세로 착지하므로
+   *  여기서 이어지지 않으면 1PV로 끝난다(브리프 원칙 1). */
+  standalone?: boolean;
+  /** 상세 페이지에서 아래 피드의 첫 질문 슬러그. 같은 화면 안이라 앵커로 보낸다. */
+  nextSlug?: string;
 }
 
 const VOTED_KEY = 'ottoke:voted';
@@ -37,7 +46,14 @@ function writeJSON(key: string, value: unknown): void {
   }
 }
 
-export function Ballot({ question, docNo, tally: initial, heading = 'h1' }: Props) {
+export function Ballot({
+  question,
+  docNo,
+  tally: initial,
+  heading = 'h1',
+  standalone = false,
+  nextSlug,
+}: Props) {
   const [tally, setTally] = useState<Tally>(initial);
   const [choice, setChoice] = useState<Choice | null>(null);
   const [thud, setThud] = useState(false);
@@ -103,10 +119,19 @@ export function Ballot({ question, docNo, tally: initial, heading = 'h1' }: Prop
     [choice, question.id],
   );
 
-  const total = tally.a + tally.b;
-  /* 🔴 결과는 항상 보여준다(브리프 §6). 수치가 텍스트로 나와 있어야
-     스니펫에 걸리고, 수치만 있는 빈 페이지가 되지 않게 댓글이 본문을 채운다. */
-  const hasResult = tally.live && total > 0;
+  const total = totalOf(tally);
+  const stage = stageOf(tally);
+  const voted = choice !== null;
+
+  /* 🔴 두 조건을 모두 넘어야 결과를 보여준다.
+   *
+   *  1) 표본 임계치 — 1표에 100%는 유머가 아니라 버그로 읽힌다(lib/tiers.ts)
+   *  2) 내가 투표했는가 — 먼저 보면 투표할 이유가 사라지고 다수 쪽으로 표가 쏠린다
+   *
+   *  수치가 검색 스니펫에서 사라지는 건 아니다. title·description·OG가 담당한다
+   *  (lib/seo.ts). 페이지 본문의 두께는 댓글이 채우고, 그래도 얇으면 noindex가 걸린다. */
+  const hasResult = showsResult(stage) && voted;
+  const notice = resultNotice(tally, voted);
   const pctA = total > 0 ? (tally.a / total) * 100 : 50;
   const pctB = 100 - pctA;
   const lead: Choice = pctA >= pctB ? 'a' : 'b';
@@ -114,7 +139,7 @@ export function Ballot({ question, docNo, tally: initial, heading = 'h1' }: Prop
 
   /* 내 기록 — 다수파였던 적 */
   useEffect(() => {
-    if (!choice || !hasResult || counted.current) return;
+    if (!choice || !showsResult(stage) || counted.current) return;
     const voted = readJSON<Record<string, Choice>>(VOTED_KEY, {});
     const mark = `${question.id}:counted`;
     if (voted[mark]) {
@@ -128,22 +153,40 @@ export function Ballot({ question, docNo, tally: initial, heading = 'h1' }: Prop
     voted[mark] = choice;
     writeJSON(VOTED_KEY, voted);
     counted.current = true;
-  }, [choice, hasResult, lead, question.id]);
+  }, [choice, lead, question.id, stage]);
 
-  /* 🔴 캡처가 곧 광고다(브리프 §4). 복사 문구에 도메인이 반드시 들어간다. */
+  /* 🔴 캡처가 곧 광고다(브리프 원칙 4). 문구에 도메인이 반드시 들어간다.
+   *
+   *  결과 수치는 **임계치를 넘겼을 때만** 넣는다 — "1명 중 100%"를 퍼뜨리면 죽은 사이트로 보인다.
+   *  마지막에 "당신은 어느 쪽?"을 붙인다(§2-2): 수치만 있으면 아직 투표 안 한 사람이
+   *  링크를 누를 이유가 없다.
+   *
+   *  모바일에서는 네이티브 공유 시트를 연다 — 한국에서 공유의 대부분이 카톡인데
+   *  텍스트를 복사해 붙이는 건 마찰이 크다. 미지원 브라우저는 클립보드로 떨어진다. */
   const share = useCallback(async () => {
     const pct = (p: number) => `${p.toFixed(0)}%`;
-    const text = hasResult
-      ? `${question.q}\n${question.a} ${pct(pctA)} · ${question.b} ${pct(pctB)}\n${SITE.wordmark} ${SITE.url}/q/${question.slug}`
-      : `${question.q}\n${SITE.wordmark} ${SITE.url}/q/${question.slug}`;
+    const lines = [question.q];
+    if (showsResult(stage)) {
+      lines.push(`${question.a} ${pct(pctA)} · ${question.b} ${pct(pctB)}`);
+    }
+    lines.push('당신은 어느 쪽?');
+
+    const url = `${SITE.url}/q/${encodeURIComponent(question.slug)}`;
+    const text = `${lines.join('\n')}\n${SITE.wordmark} ${url}`;
+
     try {
+      if (navigator.share) {
+        await navigator.share({ title: question.q, text: lines.join('\n'), url });
+        return;
+      }
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
+      /* 사용자가 공유 시트를 닫아도 여기로 온다 — 실패로 표시하지 않는다 */
       setCopied(false);
     }
-  }, [hasResult, pctA, pctB, question]);
+  }, [pctA, pctB, question, stage]);
 
   const Heading = heading;
 
@@ -170,6 +213,8 @@ export function Ballot({ question, docNo, tally: initial, heading = 'h1' }: Prop
       </div>
 
       <Heading className={styles.question}>{question.q}</Heading>
+
+      {!voted && <p className={styles.hint}>도장을 찍어 주세요</p>}
 
       <div className={styles.choices}>
         {(['a', 'b'] as const).map(key => (
@@ -200,37 +245,49 @@ export function Ballot({ question, docNo, tally: initial, heading = 'h1' }: Prop
           {bar('a', question.a, pctA)}
           {bar('b', question.b, pctB)}
 
-          {/* 🔴 수치를 문장으로도 쓴다 — 스니펫에 걸리는 형태(브리프 §6) */}
+          {/* 수치를 문장으로도 쓴다 — 스니펫에 걸리는 형태(브리프 §6) */}
           <p className={styles.turnout}>
             응답자 {total.toLocaleString('ko-KR')}명 중{' '}
             <strong>{Math.round(lead === 'a' ? pctA : pctB)}%</strong>가 &ldquo;
             {lead === 'a' ? question.a : question.b}&rdquo;를 골랐습니다.
-            {total < TURNOUT_THRESHOLD && ' 아직 표가 적습니다.'}
           </p>
 
-          {choice && (
+          {/* 판정은 50표부터 — 20표에서 "이상한 사람"이라고 하면 근거가 없다 */}
+          {showsVerdict(stage) ? (
             <p className={styles.verdict}>
               {choice === lead
                 ? `무난하네요. 재미없어요. (${Math.round(myPct)}%)`
                 : `축하합니다. 당신은 이상한 사람입니다. (${Math.round(myPct)}%)`}
             </p>
+          ) : (
+            <p className={styles.turnout}>
+              판정은 {50}표부터 내립니다. 아직 개표가 덜 됐습니다.
+            </p>
           )}
         </div>
       ) : (
-        <p className={styles.turnout}>
-          {tally.live
-            ? '아직 아무도 안 눌렀습니다. 첫 표를 던져 보세요.'
-            : '집계 서버가 연결되지 않아 결과를 표시하지 않습니다.'}
-        </p>
+        notice && <p className={styles.turnout}>{notice}</p>
       )}
 
       <div className={styles.acts}>
         <button type="button" className={`${styles.btn} ${styles.btnSeal}`} onClick={share}>
-          {copied ? '복사했습니다' : '결과 복사'}
+          {copied ? '복사했습니다' : '공유'}
         </button>
-        <a className={styles.btn} href={`/q/${encodeURIComponent(question.slug)}`}>
-          이 질문만 보기 →
-        </a>
+
+        {/* 🔴 상세 페이지에서 "이 질문만 보기"는 자기 자신을 가리킨다.
+            검색 유입은 대부분 상세로 착지하므로 여기서 다음으로 이어져야 1PV로 끝나지 않는다.
+            아래 피드가 같은 화면에 있으니 앵커로 보낸다 — 페이지를 다시 받을 이유가 없다. */}
+        {standalone ? (
+          nextSlug && (
+            <a className={styles.btn} href={`#${nextSlug}`}>
+              다음 질문 →
+            </a>
+          )
+        ) : (
+          <a className={styles.btn} href={`/q/${encodeURIComponent(question.slug)}`}>
+            이 질문만 보기 →
+          </a>
+        )}
       </div>
     </section>
   );
