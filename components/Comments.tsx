@@ -268,7 +268,7 @@ export function Comments({ question, initial, tops, counts, live }: Props) {
   };
 
   return (
-    <section className={styles.sheet}>
+    <section className={styles.sheet} id="왜-그런지">
       <div className={styles.head}>
         <h2 className={styles.title}>왜 그런지</h2>
         <span className={styles.count}>

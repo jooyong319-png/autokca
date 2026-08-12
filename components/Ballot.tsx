@@ -254,21 +254,29 @@ export function Ballot({
 
       {/* 🔴 참여자 수는 **임계치와 무관하게 항상** 보여준다(2차 §5).
           감출 것은 퍼센트지 참여 규모가 아니다. 0표면 아무것도 안 그린다. */}
-      {(total > 0 || commentCount > 0) && (
-        <p className={styles.stats}>
-          {total > 0 && (
-            <span>
-              <b>{total.toLocaleString('ko-KR')}명</b> 참여
-            </span>
-          )}
-          {total > 0 && commentCount > 0 && <span className={styles.statDot}>·</span>}
-          {commentCount > 0 && (
-            <a className={styles.statLink} href={`/q/${encodeURIComponent(question.slug)}`}>
+      <p className={styles.stats}>
+        {total > 0 && (
+          <span>
+            <b>{total.toLocaleString('ko-KR')}명</b> 참여
+          </span>
+        )}
+        {total > 0 && <span className={styles.statDot}>·</span>}
+        {/* 🔴 0개일 때도 자리를 비우지 않는다(3차 §3) — "남기기"로 작성을 유도한다.
+            댓글은 체류시간이자 SEO 본문이고, 상세 유입이 곧 사이트 성장이다.
+            상세의 댓글 섹션으로 앵커 이동한다. */}
+        <a
+          className={styles.statLink}
+          href={`/q/${encodeURIComponent(question.slug)}#왜-그런지`}
+        >
+          {commentCount > 0 ? (
+            <>
               왜 그런지 <b>{commentCount}</b>
-            </a>
+            </>
+          ) : (
+            <>왜 그런지 남기기</>
           )}
-        </p>
-      )}
+        </a>
+      </p>
 
       {hasResult ? (
         <div className={styles.tally}>

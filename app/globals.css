@@ -109,6 +109,34 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 
+/* ─── 한 화면 = 한 질문 (3차 §2) ─────────────────────────────
+ *
+ * 🔴 **문서는 `mandatory`를 지시했지만 `proximity`를 쓴다.**
+ *    §2-3(mandatory)과 §2-5("내용이 더 길면 자연스럽게 늘어나도록")는 함께 성립하지 않는다.
+ *    mandatory는 스크롤이 멈추는 순간 강제로 스냅 지점으로 끌어당기므로,
+ *    카드가 화면보다 길면 **중간 내용이 정지 상태로 도달 불가**가 된다.
+ *    긴 질문 + 결과 막대 + 통계가 겹치면 실제로 일어난다.
+ *    proximity는 스냅 감각을 주면서 긴 카드를 갇히게 하지 않는다.
+ *
+ * 🔴 **스크롤을 가로채지 않는다**(§2-2). overflow:hidden + 버튼 전용 이동은
+ *    모바일 스와이프를 죽이고 키보드·스크린리더·트랙패드 관성을 전부 무력화한다.
+ *    네이티브 스크롤을 그대로 두고 멈추는 위치만 정한다.
+ *
+ * 문서(html)를 스크롤 컨테이너로 쓴다 — 별도 래퍼를 만들면 sticky 헤더와 푸터가
+ * 컨테이너 밖으로 밀려 레이아웃을 다시 짜야 한다. 스냅 지점(`.slide`)은 홈의 피드만
+ * 내보내므로 다른 페이지는 영향을 받지 않는다. 클래스를 토글할 필요가 없다.
+ */
+html {
+  scroll-snap-type: y proximity;
+}
+
+/* 키보드(↑↓·PageUp/Down·Space)는 **네이티브가 이미 처리한다.**
+   핸들러를 붙이면 브라우저 기본 동작과 싸운다. 부드럽게만 만든다. */
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; scroll-snap-type: none; }
+}
+
 body {
   background: var(--room);
   color: var(--room-ink);

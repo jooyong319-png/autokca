@@ -51,5 +51,7 @@ export default async function HomePage() {
     })),
   );
 
-  return <Feed initial={seed} startOffset={SEED} />;
+  /* 홈만 한 화면 = 한 질문으로 넘긴다(3차 §2-8).
+     상세 페이지는 댓글이 있어 자유 스크롤이 필요하므로 켜지 않는다. */
+  return <Feed initial={seed} startOffset={SEED} snap total={order.length} />;
 }

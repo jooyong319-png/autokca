@@ -42,3 +42,72 @@
   text-decoration: none;
   border-bottom: 1px solid var(--seal);
 }
+
+/* ─── 한 화면 = 한 질문 (3차 §2) ───────────────────────────
+   슬라이드 높이를 화면보다 조금 낮춘다 — 다음 카드 상단이 살짝 걸쳐
+   "아래에 더 있다"는 신호가 된다(§2-6). 정확히 100dvh면 바닥이 딱 맞아
+   더 있는지 알 수 없다. */
+.slide {
+  min-height: calc(100vh - 7rem);  /* 폴백 */
+  min-height: calc(100dvh - 7rem); /* 주소창을 뺀 실제 화면(§2-4) */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.7rem;
+
+  scroll-snap-align: start;
+  /* 빠른 스와이프로 여러 장을 건너뛰지 않게 한다(§2-3) */
+  scroll-snap-stop: always;
+  /* sticky 헤더 아래에 카드가 정렬되도록 */
+  scroll-margin-top: 3.2rem;
+}
+
+/* 진행 인디케이터 — 한 장씩 넘기면 현재 위치를 모르면 답답하다(§2-7).
+   sticky 헤더 바로 아래에 붙는다. */
+.progress {
+  position: sticky;
+  top: 2.9rem;
+  z-index: 9;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.5rem;
+  background: var(--paper);
+  border: 1px solid var(--paper-edge);
+  font-family: var(--f-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+.progress b { color: var(--seal); font-weight: 700; }
+
+/* 데스크톱 보조 이동 — 주 이동 수단이 아니다(§2-3).
+   모바일에서는 스와이프가 주 수단이므로 감춘다. */
+.nav {
+  position: fixed;
+  right: 1.1rem;
+  bottom: 1.5rem;
+  z-index: 8;
+  display: none;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+@media (min-width: 900px) and (pointer: fine) {
+  .nav { display: flex; }
+}
+.navBtn {
+  width: 2.2rem;
+  height: 2.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--paper);
+  border: 1px solid var(--paper-edge);
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.navBtn:hover { border-color: var(--seal); color: var(--seal); }

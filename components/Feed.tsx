@@ -21,6 +21,11 @@ interface Props {
   excludeId?: string;
   /** 서버가 미리 그린 개수. 여기서부터 이어 받는다. */
   startOffset: number;
+  /** 한 화면 = 한 질문으로 넘길지(3차 §2).
+   *  홈만 켠다. **상세 페이지는 끈다** — 댓글이 있어 자유 스크롤이 필요하다(§2-8). */
+  snap?: boolean;
+  /** 전체 질문 수 — 진행 인디케이터에 쓴다 */
+  total?: number;
 }
 
 /* 🔴 브리프 원칙 2 — 투표 후 홈으로 돌려보내지 않는다.
@@ -31,13 +36,15 @@ interface Props {
  *  스크롤 위치를 건드리지 않는다 — 밑에 덧붙이기만 한다. 위로 끼워 넣으면
  *  읽던 자리가 튀고, 그 순간 이탈한다.
  */
-export function Feed({ initial, excludeId, startOffset }: Props) {
+export function Feed({ initial, excludeId, startOffset, snap = false, total }: Props) {
   const [items, setItems] = useState<FeedItem[]>(initial);
   const [offset, setOffset] = useState(startOffset);
   const [done, setDone] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [current, setCurrent] = useState(1);
   const loading = useRef(false);
   const sentinel = useRef<HTMLDivElement | null>(null);
+  const wrap = useRef<HTMLDivElement | null>(null);
 
   const loadMore = useCallback(async () => {
     if (loading.current || done) return;
@@ -79,22 +86,73 @@ export function Feed({ initial, excludeId, startOffset }: Props) {
     return () => observer.disconnect();
   }, [done, loadMore]);
 
+  /* 지금 몇 번째 카드를 보고 있는지 — 진행 인디케이터용(§2-7).
+     화면 중앙을 지나는 슬라이드 하나만 현재로 잡는다. */
+  useEffect(() => {
+    if (!snap || !wrap.current) return;
+    const slides = Array.from(wrap.current.querySelectorAll<HTMLElement>(`.${styles.slide}`));
+    if (!slides.length) return;
+
+    const observer = new IntersectionObserver(
+      entries => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          const i = slides.indexOf(e.target as HTMLElement);
+          if (i >= 0) setCurrent(i + 1);
+        }
+      },
+      /* 화면 중앙 한 줄만 관찰선으로 쓴다 — 두 카드가 동시에 걸리지 않는다 */
+      { rootMargin: '-50% 0px -50% 0px' },
+    );
+    slides.forEach(x => observer.observe(x));
+    return () => observer.disconnect();
+  }, [items.length, snap]);
+
+  /* 데스크톱 보조 이동. 키보드 핸들러는 붙이지 않는다 —
+     네이티브가 이미 처리하고, 붙이면 Space·PageDown 기본 동작과 싸운다(§2-3). */
+  const go = useCallback(
+    (dir: 1 | -1) => {
+      if (!wrap.current) return;
+      const slides = Array.from(wrap.current.querySelectorAll<HTMLElement>(`.${styles.slide}`));
+      const next = slides[current - 1 + dir];
+      if (next) next.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+    [current],
+  );
+
   return (
-    <>
-      {items.map((item, i) => (
-        <Fragment key={item.question.id}>
-          <Ballot
-            question={item.question}
-            docNo={item.docNo}
-            tally={item.tally}
-            commentCount={item.commentCount}
-            heading="h2"
-          />
-          {/* 카드 4개마다 광고 하나. 그 이상은 화면 대비 광고 비율 정책에 걸린다(2차 §3).
-              환경변수가 없으면 AdSlot이 null을 돌려주므로 빈 상자가 생기지 않는다. */}
-          {(i + 1) % 4 === 0 && <AdSlot />}
-        </Fragment>
-      ))}
+    <div ref={wrap}>
+      {snap && (
+        <span className={styles.progress}>
+          제 <b>{current}</b>호 · 전체 {(total ?? items.length).toLocaleString('ko-KR')}건
+        </span>
+      )}
+
+      {items.map((item, i) => {
+        const card = (
+          <>
+            <Ballot
+              question={item.question}
+              docNo={item.docNo}
+              tally={item.tally}
+              commentCount={item.commentCount}
+              heading="h2"
+            />
+            {/* 🔴 방식 B — 카드 하단 배너(3차 §4). 광고 전용 슬라이드(방식 A)는
+                전면이 광고라 이탈률이 크게 오른다. 같은 화면 안, 카드 아래에 둔다.
+                4장마다 하나만 — 그 이상은 화면 대비 광고 비율 정책에 걸린다.
+                환경변수가 없으면 AdSlot이 null이라 빈 상자가 생기지 않는다. */}
+            {(i + 1) % 4 === 0 && <AdSlot />}
+          </>
+        );
+        return snap ? (
+          <div key={item.question.id} className={styles.slide}>
+            {card}
+          </div>
+        ) : (
+          <Fragment key={item.question.id}>{card}</Fragment>
+        );
+      })}
 
       {!done && (
         <div ref={sentinel} className={styles.sentinel}>
@@ -117,6 +175,17 @@ export function Feed({ initial, excludeId, startOffset }: Props) {
           </a>
         </p>
       )}
-    </>
+
+      {snap && (
+        <div className={styles.nav}>
+          <button type="button" className={styles.navBtn} onClick={() => go(-1)} aria-label="이전 질문">
+            ↑
+          </button>
+          <button type="button" className={styles.navBtn} onClick={() => go(1)} aria-label="다음 질문">
+            ↓
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
