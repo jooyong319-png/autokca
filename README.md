@@ -143,6 +143,14 @@ npm run dev
    > 🔴 `NEXT_PUBLIC_SITE_URL`은 **빌드 시각에 박힌다.** 나중에 추가하면 **재배포해야** 반영된다.
    > 빠뜨리면 사이트는 멀쩡히 뜨는데 canonical·사이트맵·OG가 전부 localhost를 가리킨다 —
    > 눈으로는 안 보이고 검색엔진에만 안 잡힌다
+
+   **Sensitive(쓰기 전용) 설정은 `SUPABASE_SERVICE_ROLE_KEY` 하나만 켠다.**
+   - `SUPABASE_SERVICE_ROLE_KEY` — ✅ RLS를 우회하는 전권 키다. 다시 못 읽는 게 맞다.
+     값을 확인할 일이 생기면 Supabase 대시보드에서 다시 복사하거나 키를 회전시킨다
+   - `SUPABASE_URL` — ❌ 비밀이 아니다. 켜도 얻는 게 없고 확인만 불편해진다
+   - `NEXT_PUBLIC_SITE_URL` — ❌ **절대 켜지 않는다.** `NEXT_PUBLIC_`은 **클라이언트 번들에
+     박혀 모든 브라우저로 나간다는 뜻**이다. 구조적으로 공개된 값이라 Sensitive는 의미가 없고,
+     "가려졌다"는 착각만 만든다
 3. **Settings → Domains 에 `autokca.com` 추가**
    - `autokca.com`은 이미 Vercel 네임서버를 쓰고 A 레코드도 Vercel을 가리킨다(확인: 2026-08-10).
      **DNS 작업이 필요 없다**
