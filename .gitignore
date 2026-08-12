@@ -1,0 +1,10 @@
+node_modules/
+.next/
+out/
+.env*.local
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+
+# 폰트는 커밋한다 — 배포에 포함돼야 한다 (OFL 1.1)
+# public/fonts/*.woff2, assets/og-korean.otf 를 ignore하지 말 것

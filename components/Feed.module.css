@@ -1,0 +1,44 @@
+/* 무한 스크롤 꼬리 — 조용해야 한다.
+   로딩 표시가 요란하면 "아직 안 됐다"는 신호가 되어 이탈을 만든다. */
+
+.sentinel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.5rem;
+  padding: 0.5rem 0;
+}
+.loading {
+  font-family: var(--f-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--room-faint);
+}
+.retry {
+  font-family: var(--f-sans);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--on-seal);
+  background: var(--seal);
+  border: 1px solid var(--seal);
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+}
+.retry:hover { background: var(--ink); border-color: var(--ink); }
+
+.end {
+  margin: 0;
+  padding: 1.2rem 1.1rem;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--paper-edge);
+  font-size: 0.9rem;
+  line-height: 1.8;
+  text-align: center;
+}
+.endLink {
+  color: var(--seal);
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px solid var(--seal);
+}

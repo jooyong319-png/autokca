@@ -1,0 +1,111 @@
+/* 아카이브·주제 허브 — 목록이 주인공이므로 용지 한 장에 다 담지 않고
+   머리글 + 항목들로 나눈다. 항목 하나가 쪽지 한 장이다. */
+
+.header {
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--paper-edge);
+  box-shadow: var(--shadow);
+  padding: 1.5rem 1.5rem 1.4rem;
+}
+.title {
+  margin: 0 0 0.35rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+}
+.sub {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  letter-spacing: -0.015em;
+}
+.count {
+  margin: 0;
+  font-family: var(--f-mono);
+  font-size: 0.7rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 주제 탭 — 기표소 밖이라 --room 계열을 쓴다 */
+.topicNav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.topicNav a {
+  font-size: 0.78rem;
+  letter-spacing: -0.01em;
+  color: var(--room-ink);
+  text-decoration: none;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  padding: 0.3rem 0.6rem;
+}
+.topicNav a:hover { border-color: var(--seal); color: var(--seal); }
+.topicOn {
+  background: var(--seal) !important;
+  border-color: var(--seal) !important;
+  color: var(--on-seal) !important;
+  font-weight: 700;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.item {
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--paper-edge);
+  padding: 0.8rem 0.95rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.itemDate {
+  font-family: var(--f-mono);
+  font-size: 0.64rem;
+  color: var(--ink-faint);
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.itemLink {
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  text-decoration: none;
+  line-height: 1.4;
+}
+.itemLink:hover { color: var(--seal); text-decoration: underline; }
+.itemOptions {
+  font-family: var(--f-mono);
+  font-size: 0.68rem;
+  color: var(--ink-faint);
+  margin-top: 0.1rem;
+}
+.todayTag {
+  font-family: var(--f-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  color: var(--seal);
+  border: 1px solid var(--seal);
+  border-radius: 2px;
+  padding: 0.08rem 0.3rem;
+  margin-left: 0.4rem;
+}
+
+.empty {
+  margin: 0;
+  padding: 1rem 1.1rem;
+  background: var(--paper);
+  border: 1px solid var(--paper-edge);
+  font-size: 0.88rem;
+  color: var(--ink-faint);
+}

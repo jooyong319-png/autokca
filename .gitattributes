@@ -1,0 +1,11 @@
+# 저장소에는 LF로 넣는다. Windows 작업 사본만 CRLF로 바뀌는 걸 허용하지 않는다 —
+# 안 그러면 사람마다 줄바꿈만 바뀐 diff가 계속 생긴다.
+* text=auto eol=lf
+
+# 바이너리 — 손대지 말 것
+*.woff2 binary
+*.otf   binary
+*.ttf   binary
+*.png   binary
+*.ico   binary
+*.jpg   binary

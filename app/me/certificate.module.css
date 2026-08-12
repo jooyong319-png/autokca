@@ -1,0 +1,170 @@
+/* 기표 성향 확인서 — 공문서 양식 × 내용은 헛소리.
+   양식이 진지할수록 웃기다. 그래서 조판은 끝까지 정색한다. */
+
+.cert {
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--paper-edge);
+  box-shadow: var(--shadow);
+  padding: 2rem 1.7rem 1.6rem;
+  position: relative;
+}
+
+.docline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--f-mono);
+  font-size: 0.68rem;
+  color: var(--ink-faint);
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.title {
+  margin: 1.5rem 0 1.7rem;
+  text-align: center;
+  font-family: var(--f-doc);
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  /* 자간을 넣으면 마지막 글자 뒤에도 공백이 붙어 가운데가 밀린다 */
+  text-indent: 0.28em;
+}
+
+/* 본문 표 — 공문서의 그 표 */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.table th,
+.table td {
+  border: 1px solid var(--ink);
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  vertical-align: middle;
+}
+.table th {
+  width: 34%;
+  background: var(--sunken);
+  font-family: var(--f-doc);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.figure {
+  font-family: var(--f-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.big { font-size: 1.15rem; color: var(--seal); }
+
+/* 주제별 내역 */
+.breakdown {
+  margin: 1.2rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.row {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr 3.2rem;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+}
+.rowName { color: var(--ink-soft); }
+.rowTrack {
+  display: block;
+  height: 8px;
+  background: var(--sunken);
+  border: 1px solid var(--rule);
+  overflow: hidden;
+}
+.rowFill { display: block; height: 100%; background: var(--seal); }
+.rowNum {
+  font-family: var(--f-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.74rem;
+  color: var(--ink-faint);
+  text-align: right;
+}
+
+/* 확인 문구 + 도장 */
+.statement {
+  margin: 1.8rem 0 0;
+  text-align: center;
+  font-family: var(--f-doc);
+  font-size: 1rem;
+  line-height: 1.9;
+  letter-spacing: 0.02em;
+}
+.issuer {
+  margin: 1.4rem 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+}
+.issuerName {
+  font-family: var(--f-doc);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+/* 발급 도장 — 파비콘과 같은 도형이라 폰트에 의존하지 않는다 */
+.stamp {
+  width: 58px;
+  height: 58px;
+  transform: rotate(-8deg);
+}
+
+.acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.6rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--rule);
+}
+.btn {
+  font-family: var(--f-sans);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  padding: 0.55rem 0.95rem;
+  border: 1px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  text-decoration: none;
+}
+.btn:hover { background: var(--sunken); }
+.btnSeal {
+  background: var(--seal);
+  border-color: var(--seal);
+  color: var(--on-seal);
+}
+.btnSeal:hover { background: var(--ink); border-color: var(--ink); }
+
+.note {
+  margin: 1rem 0 0;
+  font-family: var(--f-mono);
+  font-size: 0.66rem;
+  line-height: 1.8;
+  color: var(--ink-faint);
+}
+
+/* 기표가 없을 때 */
+.empty {
+  text-align: center;
+  padding: 1rem 0 0.5rem;
+}
+.empty p {
+  margin: 0 0 1.1rem;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}

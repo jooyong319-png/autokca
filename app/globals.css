@@ -1,0 +1,236 @@
+/* Pretendard 셀프 호스팅 (OFL 1.1 · public/fonts/Pretendard-LICENSE.txt)
+ *
+ * 웹폰트 CDN을 쓰지 않는다 — 외부 의존이 하나 늘고, 그 도메인이 죽으면 글씨가 바뀐다.
+ *
+ * 🔴 **서브셋(KS X 1001 2350자)을 쓴다.** 전체 woff2는 Regular+Bold가 1.5MB인데
+ *    "누르면 바로 결과"인 사이트에서 첫 로드에 얹기엔 너무 무겁다(서브셋은 525KB).
+ *    서브셋에 없는 희귀 음절은 **글리프 단위로 다음 폰트로 폴백**하므로 두부가 나지 않는다 —
+ *    댓글에 어떤 글자가 들어와도 맑은 고딕이 대신 그린다.
+ *
+ * font-display: swap — 폰트를 기다리며 글씨가 안 보이는 구간을 만들지 않는다.
+ */
+@font-face {
+  font-family: 'Pretendard';
+  src: url('/fonts/Pretendard-Regular.subset.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Pretendard';
+  src: url('/fonts/Pretendard-Bold.subset.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 오또케 디자인 시스템 — "투표용지와 기표 도장"
+ *
+ * 행위가 투표이므로 물건도 투표용지다. 관공서 활자로 짜인 딱딱한 용지에 적힌 질문이
+ * "화장실 갈 때 휴대폰 들고 가나요?"인 것 — 그 낙차가 이 사이트의 유머 전부다.
+ * 그래서 카피와 조판은 끝까지 정색한다. 웃기는 건 질문 하나뿐이다.
+ *
+ * 🔴 테마 원칙: 종이는 항상 밝다. 물리적 물건이니까.
+ *    어두워지는 것은 기표소(--room)다. 다크에서 용지만 살짝 낮춘다.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* 기표소 */
+  --room:       #e9e5dc;
+  --room-ink:   #56514a;
+  --room-faint: #877f75;
+
+  /* 용지 */
+  --paper:      #fcfbf8;
+  --paper-edge: #dcd6c9;
+  --ink:        #161514;
+  --ink-soft:   #55504a;
+  --ink-faint:  #8a837a;
+  --rule:       #d8d2c5;
+  --sunken:     #f1eee6;
+
+  /* 인주 — 브랜드색이다 */
+  --seal:       #c4302b;
+  --seal-soft:  #f7e9e6;
+  --on-seal:    #ffffff;
+
+  /* 실제 공문서가 명조/고딕을 혼용한다. 그걸 따른다.
+     명조(--f-doc)는 **시스템 폰트 그대로 둔다** — 관공서 문서의 그 활자가 여기서 나오고,
+     다운로드가 0이다. Pretendard에는 명조가 없다. 고딕만 셀프 호스팅으로 올렸다. */
+  --f-doc:  "Batang", "AppleMyungjo", "Apple SD Gothic Neo", serif;
+  --f-sans: "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", system-ui, -apple-system, sans-serif;
+  --f-mono: ui-monospace, "SF Mono", Consolas, "D2Coding", monospace;
+
+  --shadow: 0 1px 2px rgba(22, 21, 20, 0.06), 0 22px 44px -26px rgba(22, 21, 20, 0.4);
+}
+
+/* OS 설정과 수동 선택 양쪽에서 같은 값을 쓴다. data-theme이 뒤에 와서 항상 이긴다. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --room:       #131210;
+    --room-ink:   #9c958b;
+    --room-faint: #6e675e;
+    --paper:      #e7e3d9;   /* 야간 개표소 — 눈부심을 줄인다 */
+    --paper-edge: #b9b2a3;
+    --ink:        #191816;
+    --ink-soft:   #4e4941;
+    --ink-faint:  #776f65;
+    --rule:       #c6bfb1;
+    --sunken:     #dcd7cb;
+    --seal:       #b32b26;
+    --seal-soft:  #efddd9;
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.5), 0 26px 50px -24px rgba(0, 0, 0, 0.9);
+  }
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --room:       #131210;
+  --room-ink:   #9c958b;
+  --room-faint: #6e675e;
+  --paper:      #e7e3d9;
+  --paper-edge: #b9b2a3;
+  --ink:        #191816;
+  --ink-soft:   #4e4941;
+  --ink-faint:  #776f65;
+  --rule:       #c6bfb1;
+  --sunken:     #dcd7cb;
+  --seal:       #b32b26;
+  --seal-soft:  #efddd9;
+  --shadow: 0 1px 0 rgba(0, 0, 0, 0.5), 0 26px 50px -24px rgba(0, 0, 0, 0.9);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+
+body {
+  background: var(--room);
+  color: var(--room-ink);
+  font-family: var(--f-sans);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; }
+h1, h2, h3 { margin: 0; line-height: 1.3; letter-spacing: -0.03em; }
+
+/* 투표용지는 좁고 길다 */
+.stage {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 1.6rem 1.1rem 3.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+/* 숫자는 예외 없이 등폭 — 득표율이 흔들리면 개표가 아니게 된다 */
+.num {
+  font-family: var(--f-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+:where(a, button):focus-visible {
+  outline: 2px solid var(--seal);
+  outline-offset: 2px;
+}
+
+/* ─── 기표소 밖: 머리글과 푸터 ─────────────────────────────
+   용지가 아니라 방에 붙은 것들이라 --room-ink를 쓴다. */
+
+.masthead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+.wordmark {
+  font-size: 1.32rem;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  color: var(--room-ink);
+  text-decoration: none;
+}
+.wordmark em { font-style: normal; color: var(--seal); }
+.masthead-date {
+  font-family: var(--f-mono);
+  font-size: 0.7rem;
+  color: var(--room-faint);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 용지와 같은 재질의 작은 쪽지 — 부록 정보용 */
+.slips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.7rem;
+}
+.slip {
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--paper-edge);
+  padding: 0.85rem 0.95rem 0.95rem;
+}
+.slip h2,
+.slip h3 {
+  margin: 0 0 0.35rem;
+  font-family: var(--f-mono);
+  font-size: 0.62rem;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  color: var(--ink-faint);
+}
+.slip p { margin: 0; font-size: 0.86rem; letter-spacing: -0.015em; }
+.slip .figure {
+  font-family: var(--f-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--seal);
+}
+.slip a {
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+}
+.slip a:hover { color: var(--seal); border-bottom-color: var(--seal); }
+
+.site-footer {
+  font-family: var(--f-mono);
+  font-size: 0.66rem;
+  line-height: 1.9;
+  color: var(--room-faint);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0;
+}
+.footer-nav a { color: var(--room-ink); text-decoration: none; padding: 0.2rem 0; }
+.footer-nav a + a::before {
+  content: '·';
+  color: var(--room-faint);
+  margin: 0 0.6rem;
+}
+.footer-nav a:hover { color: var(--seal); text-decoration: underline; }
+/* 개인정보처리방침은 법령상 다른 항목과 구분해 표시한다 */
+.footer-nav a.footer-strong { color: var(--room-ink); font-weight: 700; }
+.site-footer a { color: var(--room-ink); }

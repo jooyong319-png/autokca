@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- 기표 도장 「오」.
+       ⚠️ 글자를 <text>로 넣지 않는다 — 파비콘은 렌더링 환경마다 폰트가 달라서
+       한글이 두부(□)로 나올 수 있다. ㅇ은 원, ㅗ는 선 두 개라서 도형으로 그릴 수 있다. -->
+  <circle cx="32" cy="32" r="31" fill="#fcfbf8" />
+  <circle cx="32" cy="32" r="28" fill="none" stroke="#c4302b" stroke-width="4" />
+  <!-- ㅇ -->
+  <circle cx="32" cy="21.5" r="7.5" fill="none" stroke="#c4302b" stroke-width="3.6" />
+  <!-- ㅗ -->
+  <line x1="32" y1="32" x2="32" y2="41" stroke="#c4302b" stroke-width="3.6" stroke-linecap="butt" />
+  <line x1="20" y1="43" x2="44" y2="43" stroke="#c4302b" stroke-width="3.6" stroke-linecap="butt" />
+</svg>

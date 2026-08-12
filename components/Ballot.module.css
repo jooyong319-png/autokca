@@ -1,0 +1,254 @@
+/* 투표용지 한 장. 기표 → 개표가 한 카드 안에서 일어난다. */
+
+.ballot {
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--paper-edge);
+  box-shadow: var(--shadow);
+  padding: 1.6rem 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+/* 도장이 찍히면 용지가 눌린다 */
+.thud { animation: thud 0.32s ease-out; }
+@keyframes thud {
+  0%   { transform: translateY(0); }
+  22%  { transform: translateY(3px); }
+  55%  { transform: translateY(-1px); }
+  100% { transform: translateY(0); }
+}
+
+.docline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--f-mono);
+  font-size: 0.68rem;
+  color: var(--ink-faint);
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 0.5rem;
+}
+.docNo { color: var(--ink-soft); }
+
+.instruct {
+  margin: 0;
+  font-family: var(--f-doc);
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  color: var(--ink-soft);
+}
+
+/* 날이 바뀐 탭에 붙는 띠 — 도장 색을 써서 무시할 수 없게 한다 */
+.stale {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  background: var(--seal-soft);
+  border-left: 3px solid var(--seal);
+  padding: 0.7rem 0.9rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.staleBtn {
+  margin-left: auto;
+  flex: 0 0 auto;
+  border: 1px solid var(--seal);
+  background: var(--seal);
+  color: var(--on-seal);
+  font-family: var(--f-sans);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+}
+.staleBtn:hover { background: var(--ink); border-color: var(--ink); }
+
+.question {
+  margin: 0;
+  font-family: var(--f-sans);
+  font-size: clamp(1.55rem, 6.4vw, 2.1rem);
+  font-weight: 700;
+  line-height: 1.32;
+  letter-spacing: -0.042em;
+  text-wrap: balance;
+}
+
+/* ─── 기표 칸 — 실제 투표용지의 격자 ─── */
+.choices {
+  border: 2px solid var(--ink);
+  display: flex;
+  flex-direction: column;
+}
+.choice {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--ink);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.choice:first-child { border-top: 0; }
+.name {
+  flex: 1 1 auto;
+  padding: 0.95rem 1rem;
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  align-self: center;
+}
+.box {
+  flex: 0 0 auto;
+  width: 92px;
+  min-height: 62px;
+  border-left: 1px solid var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.choice:hover:not(:disabled) .box { background: var(--sunken); }
+.choice:disabled { cursor: default; }
+
+/* 기표 도장 — 원 안에 「오」.
+   한글 음절은 卜보다 폭이 넓어서 원에 꽉 찬다. 크기를 조금 줄이고 굵기로 도장 느낌을 낸다. */
+.seal {
+  width: 44px;
+  height: 44px;
+  border: 3px solid var(--seal);
+  border-radius: 50%;
+  color: var(--seal);
+  font-family: var(--f-doc);
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(2.3) rotate(-16deg);
+}
+.sealOn {
+  opacity: 1;
+  transform: scale(1) rotate(-7deg);
+  animation: press 0.26s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+@keyframes press {
+  from { opacity: 0.2; transform: scale(2.3) rotate(-16deg); }
+  to   { opacity: 1;   transform: scale(1) rotate(-7deg); }
+}
+
+/* ─── 개표 ─── */
+.tally {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.tallyHead {
+  font-family: var(--f-doc);
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  color: var(--ink-soft);
+  border-top: 1px solid var(--rule);
+  padding-top: 0.95rem;
+}
+
+.bar { display: flex; flex-direction: column; gap: 0.3rem; }
+.barTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.barName {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.mineTag {
+  font-family: var(--f-mono);
+  font-size: 0.6rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: var(--seal);
+  border: 1px solid var(--seal);
+  border-radius: 2px;
+  padding: 0.1rem 0.28rem;
+}
+.barPct {
+  font-family: var(--f-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+.track {
+  height: 13px;
+  background: var(--sunken);
+  border: 1px solid var(--rule);
+  overflow: hidden;
+}
+.fill {
+  height: 100%;
+  background: var(--ink-faint);
+  transition: width 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* 다수파만 인주색 — 색이 장식이 아니라 정보로 작동한다 */
+.lead .fill { background: var(--seal); }
+.lead .barPct { color: var(--seal); }
+
+.verdict {
+  margin: 0.15rem 0 0;
+  font-size: 1.12rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.45;
+  text-wrap: balance;
+}
+.turnout {
+  margin: 0;
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.acts { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.btn {
+  font-family: var(--f-sans);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  padding: 0.55rem 0.95rem;
+  border: 1px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.btn:hover { background: var(--sunken); }
+.btnSeal {
+  background: var(--seal);
+  border-color: var(--seal);
+  color: var(--on-seal);
+}
+.btnSeal:hover { background: var(--ink); border-color: var(--ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  .sealOn { animation: none; }
+  .thud { animation: none; }
+  .fill { transition: none; }
+}

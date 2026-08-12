@@ -1,0 +1,119 @@
+/* 고지 문서 — 투표용지와 같은 재질이지만 읽는 종이라서 폭이 넓고 행간이 넉넉하다. */
+
+.doc {
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--paper-edge);
+  box-shadow: var(--shadow);
+  padding: 1.8rem 1.6rem 2rem;
+}
+
+.head {
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 0.7rem;
+  margin-bottom: 1.4rem;
+}
+.title {
+  margin: 0 0 0.3rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+}
+.effective {
+  font-family: var(--f-mono);
+  font-size: 0.68rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+}
+
+.lead {
+  margin: 0 0 1.6rem;
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: var(--ink-soft);
+}
+
+.doc h2 {
+  margin: 1.9rem 0 0.6rem;
+  font-family: var(--f-doc);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--rule);
+}
+.doc h3 {
+  margin: 1.1rem 0 0.4rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.doc p {
+  margin: 0 0 0.7rem;
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+.doc ul,
+.doc ol {
+  margin: 0 0 0.9rem;
+  padding-left: 1.15rem;
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+.doc li { margin-bottom: 0.25rem; }
+.doc strong { font-weight: 700; }
+
+/* 표 — 처리위탁 현황처럼 항목이 갈리는 것 */
+.tableWrap {
+  overflow-x: auto;
+  margin: 0 0 1rem;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+.table th,
+.table td {
+  border: 1px solid var(--rule);
+  padding: 0.5rem 0.6rem;
+  text-align: left;
+  vertical-align: top;
+}
+.table th {
+  background: var(--sunken);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* 🔴 사용자가 채워야 하는 자리 — 배포 전에 눈에 걸려야 한다 */
+.fill {
+  background: var(--seal-soft);
+  border-bottom: 2px solid var(--seal);
+  color: var(--seal);
+  font-family: var(--f-mono);
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0 0.25rem;
+}
+.notice {
+  margin: 0 0 1.4rem;
+  padding: 0.85rem 1rem;
+  background: var(--seal-soft);
+  border-left: 3px solid var(--seal);
+  font-size: 0.84rem;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.contact {
+  margin-top: 1.6rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+  font-family: var(--f-mono);
+  font-size: 0.76rem;
+  line-height: 1.9;
+  color: var(--ink-soft);
+}
+.contact a { color: var(--seal); text-decoration: none; border-bottom: 1px solid var(--seal); }
