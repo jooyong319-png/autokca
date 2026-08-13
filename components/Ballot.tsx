@@ -314,6 +314,19 @@ export function Ballot({
       }`}
       id={question.slug}
     >
+      {/* 🔴 7차 §4-3(2) — 투표한 카드를 **숨기지 않고 표시만** 한다.
+       *  숨기면 결과 변화를 보러 오는 재방문 이유가 사라지고 103개를 소진하면 빈 사이트가 된다.
+       *  "또 나왔네"를 "내가 처리한 건이구나"로 바꾸는 것이 목적이다.
+       *
+       *  ⚠️ `voted`는 클라이언트 상태라 하이드레이션 후에 붙는다 →
+       *  **절대 배치**로 흐름에서 빼야 카드 높이가 안 바뀐다. 높이가 바뀌면
+       *  scroll-snap 위치가 흔들린다(이 파일에서 여러 번 겪은 실패 유형). */}
+      {voted && (
+        <span className={styles.processed} aria-hidden="true">
+          처리됨
+        </span>
+      )}
+
       <div className={styles.docline}>
         <span className={styles.docNo}>{docNo}</span>
         {/* 🔴 태그 필드를 새로 만들지 않았다 — `topic`이 이미 있고 주제 허브(`/c/[topic]`)까지

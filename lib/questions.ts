@@ -318,18 +318,27 @@ export function byKind(kind: Kind): Question[] {
  *  @param excludeId 지금 보고 있는 질문 — 피드에서 뺀다
  *  @param votesOf   질문 id → 총 표 수. 없으면 배열 순서를 그대로 쓴다
  */
+/** @param voted 이미 기표한 안건인지. 주면 **미투표를 앞으로** 보낸다(7차 §4-3).
+ *
+ *  🔴 정렬은 **갈래(진지/병맛) 안에서만** 한다. 아래 교차 배치가 그대로 유지되어야
+ *  진지 1 : 병맛 2 비중이 깨지지 않는다(7차 §7 훼손 금지 항목).
+ *
+ *  🔴 투표한 것을 **숨기지 않는다.** 3표일 때 던졌는데 지금 200표가 됐으면 보러 오고,
+ *  그게 핵심 재방문 이유다. 순서만 뒤로 보낸다.
+ */
 export function feedOrder(
   excludeId?: string,
   votesOf?: (id: string) => number,
+  voted?: (id: string) => boolean,
 ): Question[] {
   const pick = (kind: Kind) => {
     const list = byKind(kind).filter(q => q.id !== excludeId);
-    if (!votesOf) return list;
-    /* 같은 표 수면 원래 배열 순서를 지킨다 — 매 요청마다 순서가 흔들리면
+    if (!votesOf && !voted) return list;
+    /* 같은 순위면 원래 배열 순서를 지킨다 — 매 요청마다 순서가 흔들리면
        무한 스크롤에서 같은 질문이 두 번 나올 수 있다. */
     return list
-      .map((q, i) => ({ q, i, v: votesOf(q.id) }))
-      .sort((x, y) => y.v - x.v || x.i - y.i)
+      .map((q, i) => ({ q, i, v: votesOf ? votesOf(q.id) : 0, d: voted?.(q.id) ? 1 : 0 }))
+      .sort((x, y) => x.d - y.d || y.v - x.v || x.i - y.i)
       .map(x => x.q);
   };
 

@@ -479,3 +479,29 @@
   opacity: 1;
   font-weight: 700;
 }
+
+/* 🔴 "처리됨" 도장(7차 §4-3(2)). 투표한 카드를 숨기지 않고 표시만 한다.
+ *
+ *  ⚠️ **절대 배치**여야 한다. `voted`는 하이드레이션 후에 켜지므로 흐름에 넣으면
+ *  카드 높이가 그때 바뀌고 scroll-snap 위치가 흔들린다.
+ *  `.ballot`은 position이 없으므로 `.slide`/`.standalone`이 아니라 카드 자신에
+ *  기준점을 준다 — 아래 `.ballot { position: relative }`.
+ *
+ *  비스듬한 도장 — 서류에 찍는 그 각도. 용지 위라 --seal(5.33:1)이 대비를 만족한다. */
+.ballot { position: relative; }
+.processed {
+  position: absolute;
+  top: clamp(1.1rem, 2.6vh, 2.4rem);
+  right: clamp(1.1rem, 2.6vw, 2.4rem);
+  transform: rotate(-9deg);
+  font-family: var(--f-doc);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--seal);
+  border: 2px solid var(--seal);
+  border-radius: 2px;
+  padding: 0.2rem 0.45rem 0.15rem;
+  opacity: 0.55;
+  pointer-events: none;
+}

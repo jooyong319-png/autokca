@@ -17,6 +17,21 @@ export function commentCookieName(id: string): string {
   return `c_${idSlug(id)}`;
 }
 
+/** 이 사람이 기표한 안건 전체(7차 §4-3 미투표 우선 정렬용).
+ *
+ *  쿠키는 **기표한 안건에만** 있으므로 이름을 훑으면 된다 — 질문 103개를 순회할 필요가 없다.
+ *  `voteCookieName`이 `v_<id>` 형태이고 안건 id가 kebab-case라 접두사만 떼면 원래 id다. */
+export function readVotedIds(request: Request): Set<string> {
+  const out = new Set<string>();
+  const jar = request.headers.get('cookie');
+  if (!jar) return out;
+  for (const part of jar.split(';')) {
+    const name = part.trim().split('=')[0];
+    if (name.startsWith('v_') && name.length > 2) out.add(name.slice(2));
+  }
+  return out;
+}
+
 /** 번복 횟수(7차 §2-5). 질문당 3회까지. */
 export function revisionCookieName(id: string): string {
   return `r_${idSlug(id)}`;

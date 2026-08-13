@@ -121,17 +121,37 @@ export function Feed({ initial, excludeId, startOffset, snap = false, total }: P
     return () => observer.disconnect();
   }, [items.length, snap]);
 
-  /* 데스크톱 보조 이동. 키보드 핸들러는 붙이지 않는다 —
-     네이티브가 이미 처리하고, 붙이면 Space·PageDown 기본 동작과 싸운다(§2-3). */
-  const go = useCallback(
-    (dir: 1 | -1) => {
-      if (!wrap.current) return;
-      const slides = Array.from(wrap.current.querySelectorAll<HTMLElement>(`.${styles.slide}`));
-      const next = slides[current - 1 + dir];
-      if (next) next.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    },
-    [current],
-  );
+  /* 다음/이전 안건으로 이동. 키보드 핸들러는 붙이지 않는다 —
+     네이티브가 이미 처리하고, 붙이면 Space·PageDown 기본 동작과 싸운다(§2-3).
+   *
+   * 🔴 **인덱스가 아니라 기하로 찾는다.**
+   *   전에는 `slides[current - 1 + dir]`로 움직였다. 그건 스냅이 켜진 홈에서만 맞다 —
+   *   상세 페이지에는 `.slide`가 없고(스냅 꺼짐) 진행 인디케이터도 안 도니 `current`가
+   *   1에 멈춰 있어서 항상 두 번째 카드로 뛰었다. 게다가 상세에서는 사용자가 피드
+   *   **위쪽**(주 카드·댓글)에 있으므로 인덱스에 시작점이 없다.
+   *
+   *   화면 기준으로 "머리글 아래로 아직 안 올라온 첫 카드"를 다음으로 잡으면
+   *   스냅 여부·시작 위치와 무관하게 언제나 맞는다. */
+  const go = useCallback((dir: 1 | -1) => {
+    if (!wrap.current) return;
+    const slides = Array.from(wrap.current.querySelectorAll<HTMLElement>(`.${styles.slide}`));
+    /* 스냅이 없으면 카드(section) 자체가 정지점이다 */
+    const stops = slides.length
+      ? slides
+      : Array.from(wrap.current.querySelectorAll<HTMLElement>(':scope > section'));
+    if (!stops.length) return;
+
+    /* 고정 머리글에 가려지는 영역. `--header-clear`(62.4px)보다 살짝 크게 둬서
+       이미 정렬된 카드를 "다음"으로 오인하지 않게 한다. */
+    const LINE = 72;
+    const target =
+      dir === 1
+        ? stops.find(el => el.getBoundingClientRect().top > LINE)
+        : [...stops].reverse().find(el => el.getBoundingClientRect().bottom < LINE);
+
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    else if (dir === 1) window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }, []);
 
   return (
     <div ref={wrap} className={styles.wrap}>
@@ -197,16 +217,23 @@ export function Feed({ initial, excludeId, startOffset, snap = false, total }: P
         </p>
       )}
 
-      {snap && (
-        <div className={styles.nav}>
-          <button type="button" className={styles.navBtn} onClick={() => go(-1)} aria-label="이전 질문">
-            ↑
-          </button>
-          <button type="button" className={styles.navBtn} onClick={() => go(1)} aria-label="다음 질문">
-            ↓
-          </button>
-        </div>
-      )}
+      {/* 🔴 홈·상세 **둘 다** 띄운다. 전에는 `snap`일 때만(=홈만) 나왔고 데스크톱 전용이라
+          상세에서는 다음 안건으로 갈 수단이 아예 없었다 — 사유를 올리면 상세로 자동
+          이동시키므로(8차) 나가는 길이 없으면 갇힌다. */}
+      <div className={styles.nav}>
+        <button type="button" className={styles.navBtn} onClick={() => go(-1)} aria-label="이전 안건">
+          ↑
+        </button>
+        <button
+          type="button"
+          className={`${styles.navBtn} ${styles.navNext}`}
+          onClick={() => go(1)}
+          aria-label="다음 안건"
+        >
+          <span className={styles.navLabel}>다음 안건</span>
+          <span aria-hidden="true">↓</span>
+        </button>
+      </div>
     </div>
   );
 }

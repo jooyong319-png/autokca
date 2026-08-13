@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Ballot } from '@/components/Ballot';
 import { Comments } from '@/components/Comments';
+import { CommentLanding } from '@/components/CommentLanding';
 import { Feed, type FeedItem } from '@/components/Feed';
 import { BreadcrumbJsonLd, DiscussionJsonLd } from '@/components/JsonLd';
 import {
@@ -115,6 +116,10 @@ export default async function QuestionPage({ params }: Params) {
         ]}
       />
       <DiscussionJsonLd question={question} tally={tally} comments={comments} />
+
+      {/* 카드에서 사유를 올리고 넘어온 경우에만 동작한다(세션 값이 있을 때).
+          검색으로 직접 들어온 사람에게는 아무 일도 일어나지 않는다. */}
+      <CommentLanding />
 
       {/* `tops`는 이미 받아 온 topA·topB를 재사용한다 — 배치 RPC를 또 부르지 않는다.
           아래 Comments도 같은 값을 쓰므로 카드와 댓글 섹션의 1위가 어긋나지 않는다. */}

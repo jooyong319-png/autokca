@@ -199,8 +199,16 @@
   border: 2px solid var(--ink);
   box-shadow: var(--shadow);
 }
-@media (min-width: 900px) and (pointer: fine) {
-  .nav { display: flex; }
+/* 🔴 홈·상세 · 모든 화면에서 보인다. 전에는 데스크톱 전용이었다 —
+   모바일은 스와이프가 주 수단이라는 판단(3차 §2-3)이었지만, 상세 페이지에는
+   스냅이 없어 스와이프로 넘길 것도 없다. 사유를 올리면 상세로 자동 이동시키므로
+   나가는 길이 항상 보여야 한다. */
+.nav { display: flex; }
+
+/* 모바일에서는 카드 하단 버튼·입력창을 덮지 않게 더 안쪽으로 들이고 라벨을 접는다 */
+@media (max-width: 560px) {
+  .nav { right: 0.9rem; bottom: 1.1rem; }
+  .navLabel { display: none; }
 }
 /* 48×48px — 터치·클릭 최소 영역(4차 §4) */
 .navBtn {
@@ -219,3 +227,18 @@
 }
 .navBtn:first-child { border-top: 0; }
 .navBtn:hover { background: var(--seal); color: var(--on-seal); }
+
+/* "다음"은 주 동작이라 라벨을 붙여 넓힌다 — 화살표만으로는 무엇의 다음인지 모른다.
+   ↑는 보조라 정사각 그대로 둔다(두 버튼 폭이 달라지지 않게 nav를 stretch로 맞춘다). */
+.nav { align-items: stretch; }
+.navNext {
+  width: auto;
+  gap: 0.45rem;
+  padding: 0 0.85rem;
+}
+.navLabel {
+  font-family: var(--f-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}

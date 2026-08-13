@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MAX_LENGTH } from '@/lib/comments';
+import { markLanding } from './CommentLanding';
 import styles from './CardSay.module.css';
 
 /* 🔴 7차 §3 — 투표 직후 카드 안에서 바로 한 줄 쓰게 한다.
@@ -77,10 +78,13 @@ export function CardSay({ questionId, slug, sideLabel, placeholder, onWrote }: P
              누르자마자 화면이 바뀌면 등록됐는지 확인하지 못한 채 페이지가 전환되고,
              모바일에서 한 번 깜빡이면 "오류가 났나" 하는 불안을 준다.
              위에서 실제 댓글을 이미 그려 뒀으므로 그걸 눈으로 확인할 시간이다.
-             착지는 최상단이 아니라 **내 댓글**이다 — 맨 위로 보내면 질문을 다시 읽게 된다. */
-          const anchor = created?.id ? `#c-${created.id}` : '#왜-그런지';
+
+             🔴 **URL에 해시를 넣지 않는다.** 해시가 있으면 브라우저가 즉시 그 위치로
+             점프해서 질문(본문)을 못 보고 지나간다. 대신 목표를 세션에 남기고
+             상세의 `CommentLanding`이 "최상단 착지 → 잠깐 → 아래로 스크롤"을 연출한다. */
+          if (created?.id) markLanding(created.id);
           window.setTimeout(() => {
-            router.push(`/q/${encodeURIComponent(slug)}${anchor}`);
+            router.push(`/q/${encodeURIComponent(slug)}`);
           }, 900);
           return;
         }

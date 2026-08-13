@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { readVotedIds } from '@/lib/cookies';
 import { docNumber, feedOrder } from '@/lib/questions';
 import { readAllCommentCounts, readAllTopComments } from '@/lib/comments';
 import { readAllTallies, readTally } from '@/lib/votes';
@@ -25,10 +26,18 @@ export async function GET(request: Request) {
     readAllCommentCounts(),
     readAllTopComments(),
   ]);
-  const order = feedOrder(exclude, id => {
-    const t = tallies.get(id);
-    return t ? t.a + t.b : 0;
-  });
+  /* 🔴 이 라우트는 이미 `force-dynamic`이라 **쿠키를 읽어도 잃을 캐시가 없다.**
+     홈(`/`)은 ISR이라 쿠키를 못 읽는다 — 그래서 홈은 안건 1장만 서버에서 심고
+     나머지는 여기서 개인화해 내려준다(7차 §4-3의 ISR 충돌을 이렇게 우회했다). */
+  const votedIds = readVotedIds(request);
+  const order = feedOrder(
+    exclude,
+    id => {
+      const t = tallies.get(id);
+      return t ? t.a + t.b : 0;
+    },
+    id => votedIds.has(id),
+  );
   const slice = order.slice(offset, offset + PAGE);
 
   const items = await Promise.all(
