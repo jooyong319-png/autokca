@@ -198,6 +198,18 @@ body::before {
   gap: 1.1rem;
 }
 
+/* 🔴 홈 피드만 넓힌다 — 카드 실폭 ≈ 860px(4차 §2-1).
+ *
+ *  한 화면 = 한 카드는 **카드가 화면을 지배할 때만** 성립한다. 720px 카드는
+ *  1900px 화면 중앙에 놓인 작은 종이였다.
+ *
+ *  전역으로 넓히지 않는 이유: 약관·개인정보·댓글은 산문이라 한 줄이 길어지면 읽기 나빠진다.
+ *  `:has()`로 스냅 피드가 든 stage만 고른다 — 헤더·푸터도 같은 stage 안이라 함께
+ *  넓어져서 카드와 정렬이 맞는다. 미지원 브라우저는 720px에 머문다(기능 손실 없음). */
+.stage:has(.snap-feed) {
+  max-width: 894px;
+}
+
 /* 숫자는 예외 없이 등폭 — 득표율이 흔들리면 개표가 아니게 된다 */
 .num {
   font-family: var(--f-mono);
@@ -246,6 +258,9 @@ body::before {
   background: var(--room);
   border-bottom: 1px solid transparent;
 }
+/* 홈 피드의 진행 표시가 포털로 들어온다(4차 §3-1). 로고 반대쪽 끝에 붙여
+   로고 + 진행 표시가 하나의 문서 머리글로 읽히게 한다. */
+.masthead-slot { margin-left: auto; }
 /* 스크롤이 시작되면 경계선을 드러낸다 — 항상 켜 두면 첫 화면이 답답하다 */
 @supports (animation-timeline: scroll()) {
   .masthead-bar {

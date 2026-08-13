@@ -47,12 +47,28 @@
    슬라이드 높이를 화면보다 조금 낮춘다 — 다음 카드 상단이 살짝 걸쳐
    "아래에 더 있다"는 신호가 된다(§2-6). 정확히 100dvh면 바닥이 딱 맞아
    더 있는지 알 수 없다. */
+/* 🔴 4차 §6(카드가 화면 세로의 75~80%)과 §3-2(다음 카드 5~8% 걸침)는
+ *    sticky 헤더를 감안하면 **동시에 성립하지 않는다.**
+ *
+ *    1900×900 기준으로 세로가 이렇게 나뉜다:
+ *      헤더 51px(5.7%) + 카드 + 카드간격 17.6px(2%) + 걸침 = 900
+ *    카드를 78%(702px)로 맞추면 걸침이 13%가 되어 §3-2를 훌쩍 넘고,
+ *    걸침을 7%로 맞추면 카드는 85%가 된다. 두 수를 다 만족시킬 수는 없다.
+ *
+ *    걸침을 택했다. 문서 자신이 "§3-2가 이번 사이클 두 번째로 중요하다"고 못 박았고,
+ *    75~80%는 "카드가 화면을 지배한다"의 대리 지표인데 85%면 그 목적은 더 잘 달성된다.
+ *
+ *    8.5rem일 때: 카드 764px(84.9%) · 걸침 67px(7.5%) → §3-2 구간 안.
+ *    모바일 390×844도 카드 83.9% · 걸침 7.9%로 같이 맞는다.
+ *
+ *    아주 높은 화면(1440px+)에 상한을 두지 않는다. 상한을 두면 카드를 다시 가운데
+ *    띄워야 해서 이번에 고친 문제가 되살아나고, max-height는 긴 질문에서 내용이
+ *    넘치는데 잘라낼 수도 없다(아래 overflow 주석 참고). 큰 화면에서는 긴 공문서가 된다. */
 .slide {
-  min-height: calc(100vh - 7rem);  /* 폴백 */
-  min-height: calc(100dvh - 7rem); /* 주소창을 뺀 실제 화면(§2-4) */
+  min-height: calc(100vh - 8.5rem);  /* 폴백 */
+  min-height: calc(100dvh - 8.5rem); /* 주소창을 뺀 실제 화면(§2-4) */
   display: flex;
   flex-direction: column;
-  justify-content: center;
   gap: 0.7rem;
 
   scroll-snap-align: start;
@@ -62,52 +78,111 @@
   scroll-margin-top: 3.2rem;
 }
 
-/* 진행 인디케이터 — 한 장씩 넘기면 현재 위치를 모르면 답답하다(§2-7).
-   sticky 헤더 바로 아래에 붙는다. */
-.progress {
-  position: sticky;
-  top: 2.9rem;
-  z-index: 9;
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.2rem 0.5rem;
-  background: var(--paper);
-  border: 1px solid var(--paper-edge);
-  font-family: var(--f-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.06em;
-  color: var(--ink-faint);
-  font-variant-numeric: tabular-nums;
+/* 🔴 카드가 슬라이드의 남은 높이를 **전부** 먹는다(4차 §2-1).
+ *
+ *  이게 4차 문서가 지적한 문제의 핵심이었다. 슬라이드 높이는 이미 화면만큼이었지만
+ *  `justify-content: center`가 400px 카드를 788px 슬라이드 **중앙에 띄워** 놓았다.
+ *  무한 스크롤에서는 분산되던 여백이 한 화면 한 장이 되면서 위아래로 뭉친 것이다.
+ *
+ *  카드에 `min-height: 78dvh`를 직접 주지 않은 이유: 4장마다 붙는 광고 슬라이드에서
+ *  카드+광고가 화면을 넘어가 다음 카드가 안 걸친다. flex로 "남은 만큼"만 주면
+ *  광고가 있든 없든 슬라이드 총 높이가 유지된다.
+ *
+ *  ⚠️ `overflow-y: auto`는 넣지 않는다(4차 §6 검증항목과 다른 판단).
+ *     카드 안에 또 스크롤 영역을 만들면 mandatory를 버리고 proximity를 쓴 이유
+ *     (긴 카드의 중간 내용이 갇힘)를 그대로 재현한다. 내용이 길면 슬라이드가 늘어나게 둔다.
+ *     도장 애니메이션이 scale(2.3)에서 시작하므로 잘리는 문제도 함께 피한다. */
+.slide > section:first-child {
+  flex: 1 1 auto;
 }
-.progress b { color: var(--seal); font-weight: 700; }
+
+/* 🔴 진행 인디케이터를 **sticky 헤더 안으로 옮겼다**(4차 §3-1).
+ *
+ *  전에는 헤더 아래에 따로 sticky로 떠 있는 작은 칩이라 소속이 불분명했고,
+ *  "좌측 상단에 단독으로 붕 떠 있다"는 지적이 정확했다.
+ *  이제 로고와 같은 줄 우측에 앉아 하나의 문서 머리글로 읽힌다.
+ *  Feed는 클라이언트 컴포넌트라 layout의 헤더에 **포털**로 넣는다(Feed.tsx).
+ *
+ *  ⚠️ 색이 --ink-*에서 --room-*으로 바뀐다. 용지 위가 아니라 **방(헤더)**에 붙었으므로
+ *     그 배경에 맞게 설계된 토큰을 써야 한다. 다크에서 --seal은 --room 대비가
+ *     3.5:1로 작은 글씨에 부족해서 숫자도 --room-ink로 뺐다. */
+.progress {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-family: var(--f-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--room-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.progress b { color: var(--room-ink); font-weight: 700; }
+
+/* 🔴 "여기서 끝인가?" 인상을 없앤다(4차 §3-2) — 다음이 있다는 신호가 없으면
+   첫 카드에서 이탈한다. 슬라이드 높이가 화면보다 7rem 낮아 다음 카드 상단이
+   약 7% 걸치는데, 그것만으로는 의도인지 우연인지 알 수 없다. 말로 한 번 더 말해 준다.
+
+   **첫 슬라이드에만** 붙인다 — 103장 전부에 붙이면 소음이고, 한 번 넘겨 보면
+   제스처는 이미 학습된다. 스크롤하면 자연히 화면에서 사라진다. */
+.cue {
+  align-self: center;
+  margin: 0;
+  padding-top: 0.1rem;
+  font-family: var(--f-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  color: var(--room-faint);
+  animation: cue-bob 2.4s ease-in-out infinite;
+}
+@keyframes cue-bob {
+  0%, 100% { transform: translateY(0); opacity: 0.65; }
+  50%      { transform: translateY(4px); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cue { animation: none; opacity: 0.85; }
+}
 
 /* 데스크톱 보조 이동 — 주 이동 수단이 아니다(§2-3).
    모바일에서는 스와이프가 주 수단이므로 감춘다. */
+/* 🔴 4차 §4 — 작고 배경에 묻혀 안 보였다.
+ *
+ *  대비가 왜 부족했나: 버튼 배경이 --paper(#fcfbf8), 방 배경이 --room(#e9e5dc).
+ *  **라이트 모드에서 둘 다 밝은 크림색**이라 1px --paper-edge 테두리로는 분리가 안 됐다.
+ *  (다크에서는 밝은 종이가 어두운 방에 얹혀 잘 보였다 — 그래서 놓치기 쉬웠다.)
+ *
+ *  고치는 방법을 컨셉에서 가져온다: 기표칸(.choices)과 **똑같은 조판**으로 만든다.
+ *  2px 잉크 외곽선 + 1px 내부 괘선 한 덩어리. --ink는 두 테마 모두 어두우므로
+ *  (종이는 항상 밝다) 대비가 양쪽에서 확보된다. 서류 위의 작은 양식처럼 읽힌다. */
 .nav {
   position: fixed;
-  right: 1.1rem;
-  bottom: 1.5rem;
+  right: 1.4rem;
+  bottom: 1.8rem;
   z-index: 8;
   display: none;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  box-shadow: var(--shadow);
 }
 @media (min-width: 900px) and (pointer: fine) {
   .nav { display: flex; }
 }
+/* 48×48px — 터치·클릭 최소 영역(4차 §4) */
 .navBtn {
-  width: 2.2rem;
-  height: 2.2rem;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--paper);
-  border: 1px solid var(--paper-edge);
-  color: var(--ink-soft);
-  font-size: 0.9rem;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--ink);
+  color: var(--ink);
+  font-size: 1.1rem;
   line-height: 1;
   cursor: pointer;
 }
-.navBtn:hover { border-color: var(--seal); color: var(--seal); }
+.navBtn:first-child { border-top: 0; }
+.navBtn:hover { background: var(--seal); color: var(--on-seal); }

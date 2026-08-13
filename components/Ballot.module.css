@@ -1,17 +1,31 @@
 /* 투표용지 한 장. 기표 → 개표가 한 카드 안에서 일어난다. */
 
-/* 여백을 20~30% 줄였다(2차 §6-3) — 늘어져 보이던 카드가 조여지고
-   한 화면에 들어오는 카드 수가 늘어난다. */
+/* 🔴 여백 지침이 4차에서 뒤집혔다.
+ *
+ *  2차 §6-3 / 3차 §5-3은 "내부 여백 20~30% 축소"를 지시했다. 그건 **무한 스크롤**
+ *  전제였다 — 카드가 연달아 나열되니 내부 여백이 넓으면 늘어져 보였다.
+ *  scroll-snap에서는 정반대다(4차 §1): 카드가 화면을 지배해야 하므로 여백은 **확대**한다.
+ *  그래서 축소 지침을 폐기하고 4차 §2-1 기준으로 되돌렸다.
+ */
 .ballot {
   background: var(--paper);
   color: var(--ink);
   border: 1px solid var(--paper-edge);
   box-shadow: var(--shadow);
-  padding: 1.2rem 1.35rem 1.15rem;
+  padding: clamp(1.5rem, 3.4vh, 3.2rem) clamp(1.35rem, 3.2vw, 2.9rem);
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.95rem;
 }
+
+/* 🔴 카드가 슬라이드 높이를 다 먹었을 때, 내용이 위로 몰리고 아래가 비는 것을 막는다
+ *    (4차 §2-1의 `justify-content: space-between`).
+ *
+ *    JSX를 건드리지 않고 `.question`·`.stats`의 `margin-top: auto` 두 개로 세 구역을 만든다:
+ *      머리글(문서번호) │ 질문·기표칸 │ 집계·버튼
+ *    남는 높이가 두 지점에 반씩 배분되므로 실제 서류처럼 머리글은 위, 서명란은 아래에 앉는다.
+ *    카드가 내용 높이만 할 때(상세 페이지)는 auto가 0이라 아무 일도 일어나지 않는다.
+ *    ⚠️ 각 규칙 안에 직접 쓴다 — `margin: 0`이 뒤에 오면 auto가 덮인다. */
 
 /* 도장이 찍히면 용지가 눌린다 */
 .thud { animation: thud 0.32s ease-out; }
@@ -72,12 +86,15 @@
 }
 .staleBtn:hover { background: var(--ink); border-color: var(--ink); }
 
+/* 한 화면에 질문이 하나뿐이므로 **제목이 화면의 주인공**이어야 한다(4차 §2-2).
+   상한 2.1rem(34px) → 3rem(48px). 최장 질문 35자가 860px 카드에서 3줄에 들어간다.
+   `margin-top: auto`가 위쪽 남은 공간을 흡수한다(위 세 구역 주석 참고). */
 .question {
-  margin: 0;
+  margin: auto 0 0;
   font-family: var(--f-sans);
-  font-size: clamp(1.55rem, 6.4vw, 2.1rem);
+  font-size: clamp(1.7rem, 4.4vw, 3rem);
   font-weight: 700;
-  line-height: 1.32;
+  line-height: 1.28;
   letter-spacing: -0.042em;
   text-wrap: balance;
 }
@@ -102,18 +119,20 @@
   cursor: pointer;
 }
 .choice:first-child { border-top: 0; }
+/* 선택지·도장을 함께 키운다(4차 §2-3). 도장은 컨셉의 핵심인데 44px로는 존재감이 없었다.
+   최장 선택지가 11자라 모바일에서는 2줄로 접힌다 — 그래서 폭은 %로 두고 상한만 잡는다. */
 .name {
   flex: 1 1 auto;
-  padding: 0.95rem 1rem;
-  font-size: 1.02rem;
+  padding: 1.05rem 1.15rem;
+  font-size: clamp(1.2rem, 3.6vw, 1.55rem);
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
   align-self: center;
 }
 .box {
   flex: 0 0 auto;
-  width: 92px;
-  min-height: 62px;
+  width: clamp(84px, 24%, 130px);
+  min-height: clamp(74px, 10.5vh, 98px);
   border-left: 1px solid var(--ink);
   display: flex;
   align-items: center;
@@ -127,14 +146,18 @@
    그래서 **점선 원 플레이스홀더**를 놓는다 — 여기가 도장 자리라는 걸 형태로 말한다.
    hover·focus에서 진해지고, 찍히면 실선 인주색으로 바뀐다.
    빈칸 해소와 클릭 가능성 전달이 한 번에 해결된다. */
+/* 🔴 도장 자리(.slot)와 도장(.seal)은 **한 토큰**을 공유한다.
+   둘이 어긋나면 찍히는 순간 크기가 튄다. 44px → 60px로 키웠다(4차 §2-3). */
+.ballot { --stamp: clamp(48px, 6.2vw, 60px); }
+
 .slot {
-  width: 44px;
-  height: 44px;
+  width: var(--stamp);
+  height: var(--stamp);
   border: 1.5px dashed var(--rule-strong);
   border-radius: 50%;
   color: var(--ink-faint);
   font-family: var(--f-doc);
-  font-size: 1.2rem;
+  font-size: calc(var(--stamp) * 0.42);
   font-weight: 700;
   line-height: 1;
   display: flex;
@@ -169,13 +192,17 @@
 /* 🔴 카드 정보량 부족이 허전함의 원인 2였다(2차 §5).
    참여자 수는 **임계치와 무관하게 항상** 보여준다 — 감출 것은 퍼센트지 참여 규모가 아니다.
    댓글 수는 상세로 넘어갈 동기다. 댓글은 체류시간이자 SEO 본문이라 상세 유입이 곧 성장이다. */
+/* `margin: auto 0 0`이 두 가지를 한다(4차 §2-4):
+   ① 여기부터 아래(집계·버튼)를 **카드 하단에 붙인다**
+   ② `<p>` 기본 마진 1em을 지운다 — flex gap과 겹쳐 이 줄만 유독 떠 있었다 */
 .stats {
+  margin: auto 0 0;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.55rem;
   font-family: var(--f-mono);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   color: var(--ink-faint);
   font-variant-numeric: tabular-nums;
 }
@@ -192,13 +219,13 @@
 /* 기표 도장 — 원 안에 「오」.
    한글 음절은 卜보다 폭이 넓어서 원에 꽉 찬다. 크기를 조금 줄이고 굵기로 도장 느낌을 낸다. */
 .seal {
-  width: 44px;
-  height: 44px;
+  width: var(--stamp);
+  height: var(--stamp);
   border: 3px solid var(--seal);
   border-radius: 50%;
   color: var(--seal);
   font-family: var(--f-doc);
-  font-size: 1.2rem;
+  font-size: calc(var(--stamp) * 0.42);
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0;
@@ -297,16 +324,21 @@
 }
 
 .acts { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+/* 터치 영역 48px 확보(4차 §2-4). 카드가 커진 만큼 버튼도 따라와야 균형이 맞는다. */
 .btn {
   font-family: var(--f-sans);
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  padding: 0.55rem 0.95rem;
+  min-height: 48px;
+  padding: 0.6rem 1.25rem;
+  display: inline-flex;
+  align-items: center;
   border: 1px solid var(--ink);
   background: transparent;
   color: var(--ink);
   cursor: pointer;
+  text-decoration: none;
 }
 .btn:hover { background: var(--sunken); }
 .btnSeal {

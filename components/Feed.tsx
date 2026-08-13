@@ -1,6 +1,7 @@
 'use client';
 
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { Question } from '@/lib/questions';
 import type { Tally } from '@/lib/votes';
 import { AdSlot } from './AdSlot';
@@ -42,6 +43,9 @@ export function Feed({ initial, excludeId, startOffset, snap = false, total }: P
   const [done, setDone] = useState(false);
   const [failed, setFailed] = useState(false);
   const [current, setCurrent] = useState(1);
+  /* 진행 표시가 들어갈 sticky 헤더 안의 자리(4차 §3-1). layout.tsx가 비워 둔다.
+     서버 렌더에는 없다 — 어차피 `current`가 클라이언트 상태라 서버에서 그릴 값이 없다. */
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
   const loading = useRef(false);
   const sentinel = useRef<HTMLDivElement | null>(null);
   const wrap = useRef<HTMLDivElement | null>(null);
@@ -70,6 +74,11 @@ export function Feed({ initial, excludeId, startOffset, snap = false, total }: P
       loading.current = false;
     }
   }, [done, excludeId, offset]);
+
+  useEffect(() => {
+    if (!snap) return;
+    setSlot(document.getElementById('feed-progress-slot'));
+  }, [snap]);
 
   useEffect(() => {
     const node = sentinel.current;
@@ -121,12 +130,17 @@ export function Feed({ initial, excludeId, startOffset, snap = false, total }: P
   );
 
   return (
-    <div ref={wrap}>
-      {snap && (
-        <span className={styles.progress}>
-          제 <b>{current}</b>호 · 전체 {(total ?? items.length).toLocaleString('ko-KR')}건
-        </span>
-      )}
+    <div ref={wrap} className={snap ? 'snap-feed' : undefined}>
+      {/* 🔴 sticky 헤더 안으로 포털(4차 §3-1). 전에는 헤더 아래 따로 떠 있어
+          소속이 불분명했다. 자리를 못 찾으면 아무것도 그리지 않는다 —
+          진행 표시는 보조 정보라 없어도 이동에 지장이 없다. */}
+      {snap && slot &&
+        createPortal(
+          <span className={styles.progress}>
+            제 <b>{current}</b>호 · 전체 {(total ?? items.length).toLocaleString('ko-KR')}건
+          </span>,
+          slot,
+        )}
 
       {items.map((item, i) => {
         const card = (
@@ -148,6 +162,8 @@ export function Feed({ initial, excludeId, startOffset, snap = false, total }: P
         return snap ? (
           <div key={item.question.id} className={styles.slide}>
             {card}
+            {/* 다음이 있다는 신호. 첫 장에만 — 103장 전부면 소음이다(4차 §3-2) */}
+            {i === 0 && <p className={styles.cue}>↓ 다음 안건</p>}
           </div>
         ) : (
           <Fragment key={item.question.id}>{card}</Fragment>

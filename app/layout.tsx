@@ -60,6 +60,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <a className="wordmark" href="/">
                 오또케<em>?!</em>
               </a>
+              {/* 🔴 홈 피드의 진행 표시("제 1호 · 전체 103건")가 포털로 들어오는 자리(4차 §3-1).
+                  전에는 헤더 아래에 따로 sticky로 떠 있어 소속이 불분명했다.
+                  다른 페이지에서는 빈 span으로 남는다. */}
+              <span id="feed-progress-slot" className="masthead-slot" />
             </div>
             <span className="masthead-tagline">{SITE.tagline}</span>
           </header>
