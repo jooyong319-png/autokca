@@ -55,6 +55,12 @@
 
   /* 인주 — 브랜드색이다 */
   --seal:       #c4302b;
+  /* 🔴 **기표소(`--room`) 배경 위의 작은 글씨**에는 `--seal`을 쓸 수 없다.
+     #c4302b는 --room 위에서 4.39:1로 작은 글씨 기준 4.5:1에 미달한다(용지 위는 5.33:1로 통과).
+     푸터 링크 hover가 여기 걸렸다. 살짝 어둡게 낮춘 이 값은 4.92:1로 통과하고
+     눈으로는 같은 인주색이다. 방 배경 위에 인주색 글씨를 놓을 일이 또 생기면 이걸 쓴다.
+     ⚠️ 큰 글씨는 3:1이라 예외다 — 워드마크의 「?!」(21px bold)는 `--seal`을 그대로 쓴다. */
+  --seal-ink:   #b82a25;
   --seal-soft:  #f7e9e6;
   --on-seal:    #ffffff;
 
@@ -84,43 +90,19 @@
   --header-clear: calc(var(--header-h) + var(--header-gap));
 }
 
-/* OS 설정과 수동 선택 양쪽에서 같은 값을 쓴다. data-theme이 뒤에 와서 항상 이긴다. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    color-scheme: dark;
-    --room:       #131210;
-    --room-ink:   #9c958b;
-    --room-faint: #6e675e;
-    --paper:      #e7e3d9;   /* 야간 개표소 — 눈부심을 줄인다 */
-    --paper-edge: #b9b2a3;
-    --ink:        #191816;
-    --ink-soft:   #4e4941;
-    --ink-faint:  #776f65;
-    --rule:       #c6bfb1;
-    --rule-strong: #a79e8c;
-    --sunken:     #dcd7cb;
-    --seal:       #b32b26;
-    --seal-soft:  #efddd9;
-    --shadow: 0 1px 0 rgba(0, 0, 0, 0.5), 0 26px 50px -24px rgba(0, 0, 0, 0.9);
-  }
-}
-:root[data-theme='dark'] {
-  color-scheme: dark;
-  --room:       #131210;
-  --room-ink:   #9c958b;
-  --room-faint: #6e675e;
-  --paper:      #e7e3d9;
-  --paper-edge: #b9b2a3;
-  --ink:        #191816;
-  --ink-soft:   #4e4941;
-  --ink-faint:  #776f65;
-  --rule:       #c6bfb1;
-  --rule-strong: #a79e8c;
-  --sunken:     #dcd7cb;
-  --seal:       #b32b26;
-  --seal-soft:  #efddd9;
-  --shadow: 0 1px 0 rgba(0, 0, 0, 0.5), 0 26px 50px -24px rgba(0, 0, 0, 0.9);
-}
+/* 🔴 다크 테마를 두지 않는다 — **라이트 하나만** (2026-08-13, 사용자 결정).
+ *
+ *  전에는 `prefers-color-scheme: dark`로 기표소가 어두워졌다. 그래서
+ *  "어떤 컴퓨터에선 밝고 어떤 컴퓨터에선 어둡다"가 됐다.
+ *
+ *  라이트 고정이 컨셉에 맞다: **투표용지는 종이고 종이는 밝다.** 배경(기표소)만
+ *  뒤집히면 같은 사이트가 두 얼굴이 된다. 스크린샷이 퍼지는 것이 이 사이트의 유통
+ *  경로이므로(브리프 원칙 4) 어디서 캡처해도 같은 모습이어야 브랜드가 쌓인다.
+ *
+ *  ⚠️ 위 `:root`의 `color-scheme: light`를 **지우지 말 것.** OS가 다크여도
+ *     스크롤바·기본 폼 컨트롤·`input` 자동완성 배경을 밝게 유지하는 선언이다.
+ *     이게 없으면 밝은 페이지에 검은 스크롤바가 붙는다.
+ */
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
@@ -189,18 +171,7 @@ body::before {
     linear-gradient(to bottom, rgba(22, 21, 20, 0.045) 1px, transparent 1px);
   background-size: 16px 16px;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) body::before {
-    background-image:
-      linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-  }
-}
-:root[data-theme='dark'] body::before {
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-}
+/* 다크용 흰 괘선 변형은 제거했다 — 라이트 하나만 쓴다(위 테마 주석). */
 
 /* 투표용지는 좁고 길다. 560 → 620 → **720px**(2차 §6-1).
    1900px 화면에서 좌우 배경이 65%를 차지하던 문제. 720이면 질문 제목이 한 줄에
@@ -374,7 +345,8 @@ body::before {
   color: var(--room-faint);
   margin: 0 0.6rem;
 }
-.footer-nav a:hover { color: var(--seal); text-decoration: underline; }
+/* 10.6px 작은 글씨 + 기표소 배경이라 --seal은 4.39:1로 미달한다. --seal-ink를 쓴다. */
+.footer-nav a:hover { color: var(--seal-ink); text-decoration: underline; }
 /* 개인정보처리방침은 법령상 다른 항목과 구분해 표시한다 */
 .footer-nav a.footer-strong { color: var(--room-ink); font-weight: 700; }
 .site-footer a { color: var(--room-ink); }

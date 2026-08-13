@@ -41,10 +41,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#e9e5dc' },
-    { media: '(prefers-color-scheme: dark)', color: '#131210' },
-  ],
+  /* 라이트 하나만 쓰므로 색도 하나다(globals.css 테마 주석).
+     모바일 브라우저 상단 바 색 — 기표소 배경과 같은 값이라 화면이 이어져 보인다. */
+  themeColor: '#e9e5dc',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
