@@ -210,7 +210,15 @@ export function Ballot({
   );
 
   return (
-    <section className={`${styles.ballot} ${thud ? styles.thud : ''}`} id={question.slug}>
+    /* 전역 `ballot` 클래스는 `.stage:has(.ballot)`가 종이 폭을 넓히는 데 쓴다(globals.css).
+       투표용지가 있는 페이지(홈·상세)만 넓어지고, 목록(`/q`·`/best`·`/c`)과
+       법적 고지는 산문이라 720px로 남는다. */
+    <section
+      className={`ballot ${styles.ballot} ${standalone ? styles.standalone : ''} ${
+        thud ? styles.thud : ''
+      }`}
+      id={question.slug}
+    >
       <div className={styles.docline}>
         <span className={styles.docNo}>{docNo}</span>
         <span>{question.kind === 'serious' ? '안건' : '별건'}</span>
