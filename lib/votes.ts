@@ -53,3 +53,19 @@ export async function castVote(questionId: string, choice: 'a' | 'b'): Promise<T
   const raw = await rpc('cast_vote', { qid: questionId, ch: choice }, false);
   return raw === null ? EMPTY : shape(raw);
 }
+
+/** 기표 번복 — 한 쪽에서 빼고 다른 쪽에 더한다.
+ *
+ *  🔴 **취소는 없다.** 표를 되돌리는 함수를 만들지 않는다 —
+ *  집계에서 표가 사라지면 "아까 N명이었는데" 같은 의심이 생기고, 그건 이 사이트가
+ *  파는 유일한 것(집계 신뢰)을 깎는다. 마음이 바뀌면 다른 쪽으로 옮기면 된다.
+ *
+ *  감소와 증가를 DB 함수 한 번에 맡긴다. 두 번 왕복하면 그 사이에 합계가 틀린다. */
+export async function changeVote(
+  questionId: string,
+  from: 'a' | 'b',
+  to: 'a' | 'b',
+): Promise<Tally> {
+  const raw = await rpc('change_vote', { qid: questionId, from_ch: from, to_ch: to }, false);
+  return raw === null ? EMPTY : shape(raw);
+}

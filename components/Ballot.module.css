@@ -471,3 +471,11 @@
   .voice { grid-template-columns: 1fr auto; }
   .voiceSide { grid-column: 1 / -1; min-width: 0; }
 }
+
+/* 기표를 거절당했을 때(사유 제출 후 번복 시도). 인주색으로 무시할 수 없게 한다.
+   --seal은 용지(--paper) 위에서 5.33:1이라 이 크기에서도 대비가 충분하다. */
+.hintDenied {
+  color: var(--seal);
+  opacity: 1;
+  font-weight: 700;
+}

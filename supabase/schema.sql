@@ -146,6 +146,54 @@ $$;
 -- anon 역할에는 아무 권한도 주지 않는다. 서버(서비스 키)만 호출한다.
 revoke all on function public.read_tally(text) from anon, authenticated;
 revoke all on function public.cast_vote(text, text) from anon, authenticated;
+
+-- 기표 번복 — 한 쪽을 빼고 다른 쪽에 더한다. **취소는 없다**(함수 자체를 만들지 않는다).
+--
+-- 🔴 합계가 늘어나면 안 된다. 번복은 표를 옮기는 것이지 새로 만드는 것이 아니다.
+--    그래서 감소와 증가를 **한 update 안에서** 한다 — 두 번 부르면 그 사이에 합계가 틀린다.
+--
+-- ⚠️ 빼려는 쪽이 이미 0인 경우: 쿠키는 "이 사람은 기표했다"고 하는데 DB에는 그 표가 없는
+--    상태다(집계를 초기화했거나 검증 데이터를 지웠을 때 실제로 생긴다).
+--    그때 0에서 더 빼면 음수가 되고, 그냥 더하기만 하면 합계가 1 늘어난다.
+--    **음수를 만들지 않는 쪽을 택한다** — 음수 득표는 화면에서 즉시 버그로 읽히고
+--    퍼센트 계산까지 망가진다. 이 경우는 DB가 이미 표를 잃은 상태이므로
+--    합계가 1 늘어나는 것이 아니라 잃었던 유권자 1명이 제자리를 찾는 것에 가깝다.
+create or replace function public.change_vote(qid text, from_ch text, to_ch text)
+returns table (a integer, b integer)
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if from_ch not in ('a', 'b') or to_ch not in ('a', 'b') then
+    raise exception 'choice must be a or b, got % -> %', from_ch, to_ch;
+  end if;
+
+  -- 같은 쪽을 다시 누른 것 — 아무것도 하지 않고 현재 집계만 돌려준다
+  if from_ch = to_ch then
+    return query select t.a, t.b from public.tallies t where t.question_id = qid;
+    return;
+  end if;
+
+  update public.tallies as t
+     set a = case
+               when to_ch = 'a' then t.a + 1
+               when t.a > 0     then t.a - 1
+               else 0
+             end,
+         b = case
+               when to_ch = 'b' then t.b + 1
+               when t.b > 0     then t.b - 1
+               else 0
+             end,
+         updated_at = now()
+   where t.question_id = qid;
+
+  return query
+    select t.a, t.b from public.tallies t where t.question_id = qid;
+end;
+$$;
+revoke all on function public.change_vote(text, text, text) from anon, authenticated;
 revoke all on function public.list_comments(text, integer) from anon, authenticated;
 revoke all on function public.add_comment(text, text, text) from anon, authenticated;
 revoke all on function public.like_comment(bigint) from anon, authenticated;

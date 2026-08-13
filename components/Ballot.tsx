@@ -69,13 +69,20 @@ export function Ballot({
   const [choice, setChoice] = useState<Choice | null>(null);
   const [thud, setThud] = useState(false);
   const [copied, setCopied] = useState(false);
+  /** 서버가 기표를 거절한 이유. 잠긴 상태에서 다른 쪽을 누르면 채워진다. */
+  const [denied, setDenied] = useState<string | null>(null);
   const busy = useRef(false);
-  const counted = useRef(false);
 
   /* 🔴 투표 여부의 진실은 **서버 쿠키**에 있다. localStorage는 첫 화면을 빠르게 그리는
      힌트로만 쓰고, 서버 응답이 오면 그 값으로 덮는다. 둘이 어긋나면 사용자가
      "투표한 것처럼 보이는데 댓글도 못 쓰고 다시 투표도 못 하는" 상태에 갇힌다. */
   const { state: server } = useVoteState(question.id, true);
+  /* 🔴 사유를 제출하면 기표가 잠긴다. 진영이 기표 쿠키에서 나오므로 번복하면
+     내가 쓴 의견이 "반대편" 칼럼에 남는다(`/api/vote` 주석).
+     서버 응답이 오기 전에는 **잠기지 않은 것으로 본다** — 낙관해도 서버가 409로
+     되돌리고 이유를 알려주므로 사용자가 갇히지 않는다. 반대로 비관하면
+     아직 사유를 안 쓴 사람도 잠긴 화면을 잠깐 보게 된다. */
+  const locked = server?.wrote ?? false;
 
   useEffect(() => {
     const mine = readJSON<Record<string, Choice>>(VOTED_KEY, {})[question.id];
@@ -99,8 +106,20 @@ export function Ballot({
 
   const vote = useCallback(
     async (ch: Choice) => {
-      if (choice || busy.current) return;
+      if (busy.current) return;
+      /* 같은 쪽을 다시 누른 것 — 아무 일도 하지 않는다.
+         취소가 없으므로 "다시 눌러 해제"가 되면 안 된다. */
+      if (choice === ch) return;
+      /* 사유를 제출한 뒤에는 잠긴다 — 진영이 기표 쿠키에서 나오므로 여기서 바꾸면
+         내가 쓴 의견이 "반대편" 칼럼에 남는다(`/api/vote` 주석 참고). */
+      if (choice !== null && locked) return;
       busy.current = true;
+      setDenied(null);
+
+      /* 실패했을 때 되돌릴 값 — 번복은 두 칸이 동시에 움직이므로 낙관적 갱신을
+         되돌리지 않으면 합계가 화면에서만 틀어진다. */
+      const prevChoice = choice;
+      const prevTally = tally;
 
       setChoice(ch);
       setThud(true);
@@ -114,7 +133,14 @@ export function Ballot({
       } catch {
         /* 진동이 막혀 있어도 투표는 되어야 한다 */
       }
-      setTally(t => ({ ...t, [ch]: t[ch] + 1 } as Tally));
+      /* 번복이면 **옮긴다**(한 쪽 -1, 다른 쪽 +1). 신규면 더하기만.
+         합계가 늘어나면 안 된다 — 번복은 표를 만드는 것이 아니다. */
+      setTally(t => {
+        const next = { ...t };
+        if (prevChoice) next[prevChoice] = Math.max(0, next[prevChoice] - 1);
+        next[ch] = next[ch] + 1;
+        return next as Tally;
+      });
 
       try {
         const res = await fetch('/api/vote', {
@@ -122,26 +148,51 @@ export function Ballot({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: question.id, choice: ch }),
         });
-        if (res.ok) {
-          const next = (await res.json()) as Tally & { myVote: Choice | null };
+        const next = (await res.json().catch(() => null)) as
+          | (Tally & { myVote: Choice | null; error?: string })
+          | null;
+
+        if (res.ok && next) {
           if (next.myVote) setChoice(next.myVote);
           if (next.live) setTally({ a: next.a, b: next.b, live: true });
           const voted = readJSON<Record<string, Choice>>(VOTED_KEY, {});
           voted[question.id] = next.myVote ?? ch;
           writeJSON(VOTED_KEY, voted);
+        } else if (next) {
+          /* 서버가 거절했다(사유 제출 후 번복, 집계 서버 다운 등).
+             **서버 상태가 진실이므로** 그 값으로 맞추고 이유를 보여준다. */
+          setChoice(next.myVote);
+          setTally(next.live ? { a: next.a, b: next.b, live: true } : prevTally);
+          setDenied(next.error ?? '기표를 반영하지 못했습니다.');
+          const voted = readJSON<Record<string, Choice>>(VOTED_KEY, {});
+          if (next.myVote) {
+            voted[question.id] = next.myVote;
+          } else {
+            /* 반영되지 않았으므로 힌트도 지운다 — 남겨 두면 다음 마운트에서
+               "기표한 것처럼 보이는데 다시 기표도 못 하는" 상태가 된다. */
+            delete voted[question.id];
+            delete voted[`${question.id}:counted`];
+          }
+          writeJSON(VOTED_KEY, voted);
+        } else {
+          setChoice(prevChoice);
+          setTally(prevTally);
         }
       } catch {
-        /* 집계가 실패해도 화면은 그대로 둔다 */
+        /* 🔴 네트워크 오류는 **성공했는지 알 수 없다.** 화면을 그대로 두고
+           다음 마운트의 GET이 쿠키 기준으로 고치게 맡긴다. 여기서 되돌리면
+           실제로는 반영된 표를 화면에서만 지우게 된다. */
       } finally {
         busy.current = false;
       }
     },
-    [choice, question.id],
+    [choice, locked, tally, question.id],
   );
 
   const total = totalOf(tally);
   const stage = stageOf(tally);
   const voted = choice !== null;
+
 
   /* 🔴 두 조건을 모두 넘어야 결과를 보여준다.
    *
@@ -157,22 +208,32 @@ export function Ballot({
   const lead: Choice = pctA >= pctB ? 'a' : 'b';
   const myPct = choice === 'a' ? pctA : pctB;
 
-  /* 내 기록 — 다수파였던 적 */
+  /* 내 기록 — 다수파였던 적.
+   *
+   *  🔴 번복을 지원하므로 **마운트 단위 ref로 막을 수 없다.** 어느 선택으로 반영했는지를
+   *  localStorage(`<id>:counted`)에 남기고 그것과 다를 때만 손댄다.
+   *  번복이면 **총 횟수(n)는 그대로 두고 다수파 여부만 고친다** — 한 사람이 한 번 참여한
+   *  것이지 두 번이 아니다. 여기서 n을 또 늘리면 /me의 확인서가 부풀려진다. */
   useEffect(() => {
-    if (!choice || !showsResult(stage) || counted.current) return;
+    if (!choice || !showsResult(stage)) return;
     const voted = readJSON<Record<string, Choice>>(VOTED_KEY, {});
     const mark = `${question.id}:counted`;
-    if (voted[mark]) {
-      counted.current = true;
-      return;
-    }
+    const prev = voted[mark];
+    if (prev === choice) return;
+
     const rec = readJSON<{ n: number; major: number }>(RECORD_KEY, { n: 0, major: 0 });
-    rec.n += 1;
-    if (choice === lead) rec.major += 1;
+    if (!prev) {
+      rec.n += 1;
+      if (choice === lead) rec.major += 1;
+    } else {
+      const wasMajor = prev === lead;
+      const nowMajor = choice === lead;
+      if (!wasMajor && nowMajor) rec.major += 1;
+      if (wasMajor && !nowMajor) rec.major = Math.max(0, rec.major - 1);
+    }
     writeJSON(RECORD_KEY, rec);
     voted[mark] = choice;
     writeJSON(VOTED_KEY, voted);
-    counted.current = true;
   }, [choice, lead, question.id, stage]);
 
   /* 🔴 캡처가 곧 광고다(브리프 원칙 4). 문구에 도메인이 반드시 들어간다.
@@ -253,7 +314,17 @@ export function Ballot({
 
       <Heading className={styles.question}>{question.q}</Heading>
 
-      {!voted && <p className={styles.hint}>도장을 찍어 주세요</p>}
+      {/* 🔴 자리를 항상 차지한다 — 상태에 따라 나타났다 사라지면 카드 높이가 바뀌고
+          scroll-snap 위치가 흔들린다. 문구만 갈아 끼운다. */}
+      <p className={`${styles.hint} ${denied ? styles.hintDenied : ''}`}>
+        {denied
+          ? denied
+          : !voted
+            ? '도장을 찍어 주세요'
+            : locked
+              ? '사유를 제출하셨으므로 기표를 번복할 수 없습니다'
+              : '다른 쪽을 눌러 번복할 수 있습니다. 취소는 되지 않습니다'}
+      </p>
 
       <div className={styles.choices}>
         {(['a', 'b'] as const).map(key => (
@@ -262,7 +333,10 @@ export function Ballot({
             type="button"
             className={styles.choice}
             onClick={() => vote(key)}
-            disabled={choice !== null}
+            /* 🔴 기표 후에도 **잠기지 않았으면 눌릴 수 있어야 한다**(번복).
+               잠긴 뒤에만 비활성으로 둔다. 같은 쪽을 다시 누르면 `vote`가 무시한다 —
+               취소가 없으므로 "다시 눌러 해제"가 되어선 안 된다. */
+            disabled={voted && locked}
             aria-pressed={choice === key}
           >
             <span className={styles.name}>{question[key]}</span>
