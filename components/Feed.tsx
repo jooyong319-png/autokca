@@ -4,6 +4,7 @@ import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Question } from '@/lib/questions';
 import type { Tally } from '@/lib/votes';
+import type { TopPair } from '@/lib/comments';
 import { AdSlot } from './AdSlot';
 import { Ballot } from './Ballot';
 import styles from './Feed.module.css';
@@ -14,6 +15,9 @@ export interface FeedItem {
   tally: Tally;
   /** 카드에 "왜 그런지 N"으로 뜬다 — 상세로 넘어갈 동기(2차 §5) */
   commentCount: number;
+  /** 양 진영 1위 댓글 미리보기(6차 §2-1). 서버에서 실어 보낸다 —
+   *  클라이언트가 나중에 채우면 카드 높이가 바뀌어 스냅 위치가 흔들린다. */
+  tops?: TopPair;
 }
 
 interface Props {
@@ -150,6 +154,7 @@ export function Feed({ initial, excludeId, startOffset, snap = false, total }: P
               docNo={item.docNo}
               tally={item.tally}
               commentCount={item.commentCount}
+              tops={item.tops}
               heading="h2"
             />
             {/* 🔴 방식 B — 카드 하단 배너(3차 §4). 광고 전용 슬라이드(방식 A)는

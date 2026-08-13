@@ -148,6 +148,51 @@ export async function readAllCommentCounts(): Promise<Map<string, number>> {
 }
 
 /** 갱신된 공감 수. 실패하면 null. */
+/** 카드 미리보기용 대표 댓글 — 질문별로 양 진영 1위를 한 번에(6차 §2-1).
+ *
+ *  🔴 **서버에서** 넣는다. 클라이언트가 나중에 채우면 카드 높이가 바뀌고
+ *  그게 scroll-snap 위치를 무너뜨린다 — 사용자가 방금 맞춘 자리에서 밀려난다.
+ *
+ *  RPC가 아직 없으면(`schema.sql`을 실행하지 않은 상태) `rpc()`가 null을 주고
+ *  빈 Map이 나간다. 미리보기 자리만 비고 사이트는 그대로 돈다.
+ */
+/** 미리보기는 `Comment`를 재사용하지 않는다 — `createdAt`이 필요 없는데
+ *  타입을 맞추려고 빈 문자열을 넣으면 **없는 값을 있는 것처럼** 만드는 셈이다.
+ *  카드에 실제로 쓰는 세 가지만 담는다. */
+export interface TopPreview {
+  id: number;
+  body: string;
+  likes: number;
+}
+
+export interface TopPair {
+  a: TopPreview | null;
+  b: TopPreview | null;
+}
+
+export async function readAllTopComments(): Promise<Map<string, TopPair>> {
+  const raw = await rpc('all_top_comments', {}, 60);
+  const out = new Map<string, TopPair>();
+  if (!Array.isArray(raw)) return out;
+  for (const row of raw) {
+    if (!row || typeof row !== 'object') continue;
+    const r = row as Record<string, unknown>;
+    const qid = r.question_id;
+    const side = r.side;
+    if (typeof qid !== 'string') continue;
+    if (side !== 'a' && side !== 'b') continue;
+    if (typeof r.id !== 'number' || typeof r.body !== 'string') continue;
+    const pair = out.get(qid) ?? { a: null, b: null };
+    pair[side] = {
+      id: r.id,
+      body: r.body,
+      likes: typeof r.likes === 'number' ? r.likes : 0,
+    };
+    out.set(qid, pair);
+  }
+  return out;
+}
+
 export async function likeComment(id: number): Promise<number | null> {
   const raw = await rpc('like_comment', { cid: id }, false);
   if (raw === null) return null;

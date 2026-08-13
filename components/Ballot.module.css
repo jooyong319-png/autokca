@@ -381,3 +381,93 @@
   .thud { animation: none; }
   .fill { transition: none; }
 }
+
+/* 문서번호 줄 우측 — 주제 태그 + 분류(안건/별건).
+   태그는 주제 허브로 가는 링크라 카드가 크롤 경로도 된다(6차 §2-2). */
+.doclineRight {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.topicTag {
+  font-family: var(--f-mono);
+  letter-spacing: 0.03em;
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+}
+.topicTag::before { content: '#'; opacity: 0.5; }
+.topicTag:hover { color: var(--seal); border-bottom-color: var(--seal); }
+
+/* ─── 양 진영 대표 의견 한 줄씩 (6차 §2-1) ───────────────────
+   진영 분리가 최대 차별점인데 상세에 들어가야만 보였다. 카드에서 바로 드러나게 한다.
+
+   🔴 댓글이 없어도 자리를 유지한다 — 카드 높이가 카드마다 달라지면
+   scroll-snap 위치가 흔들린다. 빈 상태 문구가 그 자리를 지킨다. */
+.voices {
+  display: grid;
+  gap: 0.4rem;
+  border-top: 1px solid var(--rule);
+  padding-top: 0.75rem;
+}
+.voice {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.3rem 0;
+  text-decoration: none;
+  color: inherit;
+}
+.voice:hover .voiceBody { color: var(--seal); }
+
+/* 진영 이름 — 투표 전에는 "한쪽/다른쪽"이라 폭이 들쑥거리지 않게 최소폭을 준다 */
+.voiceSide {
+  min-width: 4.2rem;
+  font-family: var(--f-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 내가 기표한 쪽만 인주색 테두리로 표시 — 색만으로 구분하지 않는다 */
+.voiceMine .voiceSide {
+  color: var(--seal);
+  border-bottom: 1px solid var(--seal);
+}
+
+/* 한 줄로 자른다. 두 줄이 되면 카드 높이가 질문마다 달라진다.
+   ⚠️ grid 아이템은 `min-width: auto`가 기본이라 내용보다 작아지지 않는다 —
+   `min-width: 0`이 없으면 말줄임이 안 걸리고 칸을 밀어낸다. */
+.voiceBody {
+  min-width: 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.voiceBody::before { content: '\201C'; opacity: 0.45; }
+.voiceBody::after  { content: '\201D'; opacity: 0.45; }
+
+.voiceEmpty {
+  font-family: var(--f-doc);
+  font-size: 0.86rem;
+  color: var(--ink-faint);
+}
+.voiceLikes {
+  font-family: var(--f-mono);
+  font-size: 0.62rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* 좁은 화면에서는 진영 이름을 위로 올린다 — 3열이 들어가지 않는다 */
+@media (max-width: 560px) {
+  .voice { grid-template-columns: 1fr auto; }
+  .voiceSide { grid-column: 1 / -1; min-width: 0; }
+}

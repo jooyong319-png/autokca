@@ -4,7 +4,13 @@ import { Ballot } from '@/components/Ballot';
 import { Comments } from '@/components/Comments';
 import { Feed, type FeedItem } from '@/components/Feed';
 import { BreadcrumbJsonLd, DiscussionJsonLd } from '@/components/JsonLd';
-import { commentCounts, listComments, readAllCommentCounts, topComment } from '@/lib/comments';
+import {
+  commentCounts,
+  listComments,
+  readAllCommentCounts,
+  readAllTopComments,
+  topComment,
+} from '@/lib/comments';
 import { QUESTIONS, docNumber, feedOrder, questionBySlug, topicBySlug } from '@/lib/questions';
 import { pageDescription, pageTitle } from '@/lib/seo';
 import { SITE } from '@/lib/site';
@@ -79,9 +85,10 @@ export default async function QuestionPage({ params }: Params) {
   ]);
 
   const topic = topicBySlug(question.topic);
-  const [tallies, allCommentCounts] = await Promise.all([
+  const [tallies, allCommentCounts, allTops] = await Promise.all([
     readAllTallies(),
     readAllCommentCounts(),
+    readAllTopComments(),
   ]);
   const order = feedOrder(question.id, id => {
     const t = tallies.get(id);
@@ -93,6 +100,7 @@ export default async function QuestionPage({ params }: Params) {
       docNo: docNumber(q),
       tally: await readTally(q.id),
       commentCount: allCommentCounts.get(q.id) ?? 0,
+      tops: allTops.get(q.id),
     })),
   );
 
@@ -108,6 +116,8 @@ export default async function QuestionPage({ params }: Params) {
       />
       <DiscussionJsonLd question={question} tally={tally} comments={comments} />
 
+      {/* `tops`는 이미 받아 온 topA·topB를 재사용한다 — 배치 RPC를 또 부르지 않는다.
+          아래 Comments도 같은 값을 쓰므로 카드와 댓글 섹션의 1위가 어긋나지 않는다. */}
       <Ballot
         question={question}
         docNo={docNumber(question)}
@@ -115,6 +125,10 @@ export default async function QuestionPage({ params }: Params) {
         standalone
         nextSlug={seed[0]?.question.slug}
         commentCount={counts.a + counts.b}
+        tops={{
+          a: topA && { id: topA.id, body: topA.body, likes: topA.likes },
+          b: topB && { id: topB.id, body: topB.body, likes: topB.likes },
+        }}
       />
 
       {/* 댓글이 곧 본문이다(브리프 §6) — 전용 페이지에만 붙인다 */}

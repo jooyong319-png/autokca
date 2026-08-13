@@ -1,10 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Question } from '@/lib/questions';
+import { topicBySlug, type Question } from '@/lib/questions';
+import type { TopPair } from '@/lib/comments';
 import type { Tally } from '@/lib/votes';
 import { SITE } from '@/lib/site';
-import { resultNotice, showsResult, showsVerdict, stageOf, totalOf } from '@/lib/tiers';
+import { TIER, resultNotice, showsResult, showsVerdict, stageOf, totalOf } from '@/lib/tiers';
 import { useVoteState } from './voteState';
 import styles from './Ballot.module.css';
 
@@ -27,6 +28,11 @@ interface Props {
   /** 이 질문의 댓글 수. 카드에서 상세로 넘어갈 동기다(2차 §5) —
    *  댓글은 체류시간이자 SEO 본문이라 상세 유입이 곧 사이트 성장이다. */
   commentCount?: number;
+  /** 양 진영 1위 댓글 — 카드에 한 줄씩 미리보기(6차 §2-1).
+   *
+   *  🔴 **서버에서 받아 넘긴다.** 클라이언트가 나중에 채우면 카드 높이가 바뀌고
+   *  그게 scroll-snap 위치를 무너뜨린다. */
+  tops?: TopPair;
 }
 
 const VOTED_KEY = 'ottoke:voted';
@@ -57,6 +63,7 @@ export function Ballot({
   standalone = false,
   nextSlug,
   commentCount = 0,
+  tops,
 }: Props) {
   const [tally, setTally] = useState<Tally>(initial);
   const [choice, setChoice] = useState<Choice | null>(null);
@@ -98,6 +105,15 @@ export function Ballot({
       setChoice(ch);
       setThud(true);
       setTimeout(() => setThud(false), 340);
+
+      /* 도장이 찍히는 촉감(6차 §2-4). 10ms — 알림이 아니라 "눌렸다"는 확인이다.
+         🔴 사파리·데스크톱에는 없는 API라 있는지 확인하고 부른다.
+         일부 브라우저는 사용자 제스처 없이 부르면 콘솔 경고를 내므로 클릭 핸들러 안에서만 쓴다. */
+      try {
+        navigator.vibrate?.(10);
+      } catch {
+        /* 진동이 막혀 있어도 투표는 되어야 한다 */
+      }
       setTally(t => ({ ...t, [ch]: t[ch] + 1 } as Tally));
 
       try {
@@ -193,6 +209,7 @@ export function Ballot({
   }, [pctA, pctB, question, stage]);
 
   const Heading = heading;
+  const topic = topicBySlug(question.topic);
 
   const bar = (key: Choice, name: string, pct: number) => (
     <div className={`${styles.bar} ${lead === key ? styles.lead : ''}`}>
@@ -221,7 +238,17 @@ export function Ballot({
     >
       <div className={styles.docline}>
         <span className={styles.docNo}>{docNo}</span>
-        <span>{question.kind === 'serious' ? '안건' : '별건'}</span>
+        {/* 🔴 태그 필드를 새로 만들지 않았다 — `topic`이 이미 있고 주제 허브(`/c/[topic]`)까지
+            돌아간다(6차 §2-2는 "추가하면 됩니다"라고 했지만 이미 있었다).
+            분류에서 주제 허브로 보내면 카드가 크롤 경로도 된다. */}
+        <span className={styles.doclineRight}>
+          {topic && (
+            <a className={styles.topicTag} href={`/c/${topic.slug}`}>
+              {topic.name}
+            </a>
+          )}
+          <span>{question.kind === 'serious' ? '안건' : '별건'}</span>
+        </span>
       </div>
 
       <Heading className={styles.question}>{question.q}</Heading>
@@ -298,7 +325,8 @@ export function Ballot({
             {lead === 'a' ? question.a : question.b}&rdquo;를 골랐습니다.
           </p>
 
-          {/* 판정은 50표부터 — 20표에서 "이상한 사람"이라고 하면 근거가 없다 */}
+          {/* 🔴 숫자를 하드코딩하지 않는다. 여기 `50`이 박혀 있어서 임계치를 내렸을 때
+              화면 문구만 옛 값으로 남을 수 있었다 — 임계치는 `lib/tiers.ts` 단일 소스다. */}
           {showsVerdict(stage) ? (
             <p className={styles.verdict}>
               {choice === lead
@@ -307,13 +335,48 @@ export function Ballot({
             </p>
           ) : (
             <p className={styles.turnout}>
-              판정은 {50}표부터 내립니다. 아직 개표가 덜 됐습니다.
+              판정은 {TIER.VERDICT}표부터 내립니다. 아직 개표가 덜 됐습니다.
             </p>
           )}
         </div>
       ) : (
         notice && <p className={styles.turnout}>{notice}</p>
       )}
+
+      {/* 🔴 진영 분리가 최대 차별점인데(브리프 §4) 지금은 상세에 들어가야만 보인다.
+          카드에 한 줄씩 올려 **피드에서 바로 드러나게** 한다(6차 §2-1).
+
+          댓글이 없어도 **자리를 비우지 않는다** — 카드마다 높이가 들쭉날쭉해지고,
+          scroll-snap에서는 그게 스냅 위치를 흔든다. 대신 빈 상태 문구로 작성을 유도한다.
+
+          ⚠️ 투표 전에는 진영 이름을 밝히지 않는다. 어느 쪽 의견이 우세한지 먼저 보이면
+          밴드왜건이 생긴다 — 막대를 투표 후에만 보여주는 것과 같은 이유다. */}
+      <div className={styles.voices}>
+        {(['a', 'b'] as const).map(key => {
+          const top = tops?.[key];
+          return (
+            <a
+              key={key}
+              className={`${styles.voice} ${choice === key ? styles.voiceMine : ''}`}
+              href={`/q/${encodeURIComponent(question.slug)}#왜-그런지`}
+            >
+              <span className={styles.voiceSide}>
+                {voted ? question[key] : key === 'a' ? '한쪽' : '다른쪽'}
+              </span>
+              {top ? (
+                <>
+                  <span className={styles.voiceBody}>{top.body}</span>
+                  <span className={styles.voiceLikes}>오케 {top.likes}</span>
+                </>
+              ) : (
+                <span className={styles.voiceEmpty}>
+                  아직 이유를 밝힌 사람이 없습니다
+                </span>
+              )}
+            </a>
+          );
+        })}
+      </div>
 
       <div className={styles.acts}>
         <button type="button" className={`${styles.btn} ${styles.btnSeal}`} onClick={share}>

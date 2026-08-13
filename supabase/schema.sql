@@ -216,3 +216,28 @@ as $$
 $$;
 
 revoke all on function public.all_comment_counts() from anon, authenticated;
+
+-- 질문·진영별 최고 추천 댓글을 **한 번에** — 피드 카드의 댓글 미리보기에 쓴다(6차 §2-1).
+-- 카드마다 top_comment를 두 번씩 부르면 3장만 그려도 왕복이 6번이다.
+--
+-- 🔴 미리보기를 **서버에서** 넣어야 하는 이유: 클라이언트가 나중에 채우면 카드 높이가
+--    바뀌고, 그게 scroll-snap 위치를 무너뜨린다. 사용자가 방금 맞춘 자리에서 밀려난다.
+--
+-- distinct on (question_id, side)로 진영별 1행만 남긴다. order by의 앞 두 칼럼이
+-- distinct on과 같아야 한다(Postgres 요구사항).
+-- 정렬 기준은 top_comment와 동일하게 유지한다 — 상세와 카드가 다른 댓글을 1위로
+-- 보여주면 사용자가 버그로 읽는다.
+-- ⚠️ PostgREST max-rows 기본 1000. 질문 1000개를 넘으면 조용히 잘린다(all_tallies와 동일).
+create or replace function public.all_top_comments()
+returns table (question_id text, side text, id bigint, body text, likes integer)
+language sql
+security definer
+set search_path = public
+as $$
+  select distinct on (c.question_id, c.side)
+         c.question_id, c.side, c.id, c.body, c.likes
+  from public.comments c
+  where not c.hidden
+  order by c.question_id, c.side, c.likes desc, c.created_at desc;
+$$;
+revoke all on function public.all_top_comments() from anon, authenticated;
