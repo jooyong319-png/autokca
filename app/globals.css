@@ -66,6 +66,22 @@
   --f-mono: ui-monospace, "SF Mono", Consolas, "D2Coding", monospace;
 
   --shadow: 0 1px 2px rgba(22, 21, 20, 0.06), 0 22px 44px -26px rgba(22, 21, 20, 0.4);
+
+  /* 🔴 sticky 헤더 높이 — **스냅 오프셋과 반드시 한 값을 공유한다.**
+   *
+   *  따로 두면 조용히 어긋나서 헤더가 카드 머리를 덮는다. 실제로 그랬다:
+   *  워드마크 라인박스 33.79px + 패딩 16px = 49.79px인데 스크롤하면 경계선 1px이
+   *  붙어 50.79px가 된다. `scroll-margin-top`이 51.2px였으니 여유가 **0.41px**였다.
+   *  Windows 배율 125·150%에서 반올림되며 겹쳤다.
+   *
+   *  카드가 슬라이드를 꽉 채우기 전(4차 §2)에는 카드가 스냅 경계보다 195px 아래에
+   *  떠 있어서 드러나지 않았다. 카드를 키우면서 노출된 문제다.
+   *
+   *  --header-h를 헤더의 min-height로도 쓰기 때문에 헤더는 이보다 커질 수 없고,
+   *  스냅·앵커는 항상 --header-gap만큼의 여유를 갖는다. */
+  --header-h: 3.2rem;
+  --header-gap: 0.7rem;
+  --header-clear: calc(var(--header-h) + var(--header-gap));
 }
 
 /* OS 설정과 수동 선택 양쪽에서 같은 값을 쓴다. data-theme이 뒤에 와서 항상 이긴다. */
@@ -210,6 +226,13 @@ body::before {
   max-width: 894px;
 }
 
+/* 🔴 앵커로 이동하는 **모든** 대상은 sticky 헤더 아래에 멈춘다.
+ *
+ *  없으면 대상이 y=0에 붙어 헤더가 그 머리를 덮는다. 실제로 걸리는 곳:
+ *  `#왜-그런지`(댓글 섹션 제목) · `#<슬러그>`(상세의 "다음 질문 →" 앵커).
+ *  `:target`만 걸면 되는데 스크롤 위치 계산 시점에 이미 매칭되므로 충분하다. */
+:target { scroll-margin-top: var(--header-clear); }
+
 /* 숫자는 예외 없이 등폭 — 득표율이 흔들리면 개표가 아니게 된다 */
 .num {
   font-family: var(--f-mono);
@@ -253,6 +276,9 @@ body::before {
   display: flex;
   align-items: baseline;
   gap: 0.6rem;
+  /* 🔴 높이를 토큰으로 고정한다 — 내용이 늘어도 스냅 오프셋을 넘어서지 못하게.
+     `* { box-sizing: border-box }`라 패딩·경계선이 이 값 안에 들어온다. */
+  min-height: var(--header-h);
   padding: 0.55rem 0 0.45rem;
   margin: -0.55rem 0 0;
   background: var(--room);

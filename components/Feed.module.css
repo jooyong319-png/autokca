@@ -74,8 +74,10 @@
   scroll-snap-align: start;
   /* 빠른 스와이프로 여러 장을 건너뛰지 않게 한다(§2-3) */
   scroll-snap-stop: always;
-  /* sticky 헤더 아래에 카드가 정렬되도록 */
-  scroll-margin-top: 3.2rem;
+  /* 🔴 헤더 높이와 **같은 토큰**을 쓴다(globals.css `--header-h`).
+     3.2rem을 따로 박아 뒀더니 실제 헤더 50.79px 대비 여유가 0.41px였고,
+     Windows 배율 125·150%에서 반올림되며 헤더가 카드 머리를 덮었다. */
+  scroll-margin-top: var(--header-clear);
 }
 
 /* 🔴 카드가 슬라이드의 남은 높이를 **전부** 먹는다(4차 §2-1).
