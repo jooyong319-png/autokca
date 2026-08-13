@@ -480,29 +480,34 @@
   font-weight: 700;
 }
 
-/* 🔴 "처리됨" 도장(7차 §4-3(2)). 투표한 카드를 숨기지 않고 표시만 한다.
+/* 🔴 "처리됨" 도장(7차 §4-3(2)) — **기표칸 위에 크게.**
  *
- *  ⚠️ **절대 배치**여야 한다. `voted`는 하이드레이션 후에 켜지므로 흐름에 넣으면
- *  카드 높이가 그때 바뀌고 scroll-snap 위치가 흔들린다.
- *  `.ballot`은 position이 없으므로 `.slide`/`.standalone`이 아니라 카드 자신에
- *  기준점을 준다 — 아래 `.ballot { position: relative }`.
+ *  처음엔 카드 우상단의 작은 배지였는데 눈에 들어오지 않았다.
+ *  실제로 처리한 서류는 **내용 위에** 도장을 받는다. 기표칸이 그 자리다.
  *
- *  비스듬한 도장 — 서류에 찍는 그 각도. 용지 위라 --seal(5.33:1)이 대비를 만족한다. */
-.ballot { position: relative; }
+ *  ⚠️ `pointer-events: none`이 **필수**다. 이 위를 덮으면 기표 번복을 못 한다 —
+ *     다른 쪽을 눌러 바꿀 수 있어야 한다(취소는 없지만 번복은 된다).
+ *  ⚠️ 절대 배치여야 한다. `voted`는 하이드레이션 후에 켜지므로 흐름에 넣으면
+ *     그때 카드 높이가 바뀌고 scroll-snap 위치가 흔들린다.
+ *  ⚠️ 불투명도를 낮게 유지한다 — 아래의 선택지 글자와 도장이 읽혀야 한다.
+ *     `aria-hidden`이라 스크린리더에는 안 읽히고, 시각적으로도 정보가 아니라 표식이다. */
+.choices { position: relative; }
 .processed {
   position: absolute;
-  top: clamp(1.1rem, 2.6vh, 2.4rem);
-  right: clamp(1.1rem, 2.6vw, 2.4rem);
-  transform: rotate(-9deg);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-11deg);
   font-family: var(--f-doc);
-  font-size: 0.72rem;
+  font-size: clamp(1.9rem, 7vw, 3.6rem);
   font-weight: 700;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  white-space: nowrap;
   color: var(--seal);
-  border: 2px solid var(--seal);
-  border-radius: 2px;
-  padding: 0.2rem 0.45rem 0.15rem;
-  opacity: 0.55;
+  border: 0.28em solid var(--seal);
+  border-radius: 0.08em;
+  padding: 0.14em 0.24em 0.1em;
+  opacity: 0.26;
   pointer-events: none;
 }
 

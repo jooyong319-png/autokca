@@ -1,11 +1,15 @@
-/* 고지 문서 — 투표용지와 같은 재질이지만 읽는 종이라서 폭이 넓고 행간이 넉넉하다. */
+/* 고지 문서 — 투표용지와 같은 재질이지만 읽는 종이라서 행간이 넉넉하다. */
 
+/* 🔴 종이 폭은 모든 페이지가 같지만(globals.css `--stage-w`), **글줄은 제한한다.**
+   894px 전폭으로 흐르면 한 줄이 너무 길어 다음 줄 첫머리를 찾기 어렵다.
+   종이 크기를 줄이는 대신 글이 그 안에서 읽기 좋은 폭을 갖게 한다 —
+   실제 공문서도 종이는 A4지만 본문은 여백을 크게 두고 가운데로 모인다. */
 .doc {
   background: var(--paper);
   color: var(--ink);
   border: 1px solid var(--paper-edge);
   box-shadow: var(--shadow);
-  padding: 1.8rem 1.6rem 2rem;
+  padding: 1.8rem clamp(1.6rem, 5vw, 4.5rem) 2rem;
 }
 
 .head {

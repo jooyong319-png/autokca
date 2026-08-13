@@ -2,11 +2,19 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { SITE } from '@/lib/site';
+import { showsResult, stageOf } from '@/lib/tiers';
 import styles from './certificate.module.css';
 
 export interface QuestionMeta {
   id: string;
   topic: string;
+  slug: string;
+  docNo: string;
+  q: string;
+  a: string;
+  b: string;
+  /** 서버가 내려준 **현재** 집계. `live: false`면 비율을 감춘다. */
+  tally: { a: number; b: number; live: boolean };
 }
 
 export interface TopicMeta {
@@ -26,15 +34,23 @@ interface VoteRecord {
   major: number;
 }
 
-function readVoted(): Set<string> {
+/** 안건 id → 내가 고른 쪽. 전에는 Set(투표 여부)만 읽었는데
+ *  기표 내역에 **무엇을 골랐는지**가 필요하다.
+ *  `<id>:counted` 키는 다수파 기록용 표식이라 걸러낸다. */
+function readVoted(): Map<string, 'a' | 'b'> {
+  const out = new Map<string, 'a' | 'b'>();
   try {
     const raw = localStorage.getItem('ottoke:voted');
-    if (!raw) return new Set();
+    if (!raw) return out;
     const map = JSON.parse(raw) as Record<string, unknown>;
-    return new Set(Object.keys(map).filter(k => !k.endsWith(':counted')));
+    for (const [k, v] of Object.entries(map)) {
+      if (k.endsWith(':counted')) continue;
+      if (v === 'a' || v === 'b') out.set(k, v);
+    }
   } catch {
-    return new Set();
+    /* 읽을 수 없으면 빈 기록으로 둔다 */
   }
+  return out;
 }
 
 function readRecord(): VoteRecord {
@@ -64,7 +80,7 @@ function Stamp() {
 }
 
 export function Certificate({ questions, topics }: Props) {
-  const [voted, setVoted] = useState<Set<string> | null>(null);
+  const [voted, setVoted] = useState<Map<string, 'a' | 'b'> | null>(null);
   const [record, setRecord] = useState<VoteRecord>({ n: 0, major: 0 });
   const [copied, setCopied] = useState(false);
 
@@ -76,6 +92,35 @@ export function Certificate({ questions, topics }: Props) {
 
   const total = voted?.size ?? 0;
   const majorPct = record.n > 0 ? Math.round((record.major / record.n) * 100) : null;
+
+  /* 🔴 기표 내역 — "내가 무엇에 어떻게 투표했나". 이게 `/me`에 없어서 볼 곳이 없었다.
+   *
+   *  판정(다수/소수)은 **표본 임계치를 넘긴 것만** 한다(`lib/tiers.ts`). 2표에서
+   *  "당신은 소수파"라고 하면 근거가 없고, 그건 숫자를 지어내는 것과 같은 종류의 거짓이다.
+   *  미달이면 "개표 중"으로 둔다.
+   *
+   *  정렬: **소수파 먼저.** 자기가 소수였던 안건이 이 목록에서 가장 재미있는 지점이고,
+   *  다시 보러 올 이유가 된다. 그다음 다수파, 마지막이 개표 중이다. */
+  const ledger = (() => {
+    if (!voted) return [];
+    const rows = questions
+      .filter(q => voted.has(q.id))
+      .map(q => {
+        const mine = voted.get(q.id) as 'a' | 'b';
+        const t = q.tally;
+        const sum = t.a + t.b;
+        const decided = showsResult(stageOf({ ...t }));
+        const myPct = decided && sum > 0 ? ((mine === 'a' ? t.a : t.b) / sum) * 100 : null;
+        const minor = myPct === null ? null : myPct < 50;
+        return { q, mine, sum, myPct, minor };
+      });
+    /* 소수(0) → 다수(1) → 개표 중(2). 같은 그룹에서는 내 비율이 낮은 순 = 더 외로운 순 */
+    const rank = (r: (typeof rows)[number]) => (r.minor === null ? 2 : r.minor ? 0 : 1);
+    return rows.sort((x, y) => rank(x) - rank(y) || (x.myPct ?? 0) - (y.myPct ?? 0));
+  })();
+
+  const minorCount = ledger.filter(r => r.minor === true).length;
+  const countingCount = ledger.filter(r => r.minor === null).length;
 
   const byTopic = topics
     .map(t => {
@@ -190,6 +235,52 @@ export function Certificate({ questions, topics }: Props) {
               </div>
             ))}
           </div>
+
+          <section className={styles.ledger} aria-labelledby="기표-내역">
+            <div className={styles.ledgerHead}>
+              <h2 className={styles.ledgerTitle} id="기표-내역">
+                기표 내역
+              </h2>
+              <span className={styles.ledgerSum}>
+                소수 {minorCount} · 개표 중 {countingCount}
+              </span>
+            </div>
+
+            <ul className={styles.list}>
+              {ledger.map(r => (
+                <li key={r.q.id} className={styles.entry}>
+                  <a
+                    className={styles.entryLink}
+                    href={`/q/${encodeURIComponent(r.q.slug)}`}
+                  >
+                    <span className={styles.entryNo}>{r.q.docNo}</span>
+                    <span className={styles.entryQ}>{r.q.q}</span>
+                  </a>
+                  <p className={styles.entryMeta}>
+                    <span className={styles.entryMine}>{r.q[r.mine]}</span>
+                    {r.myPct === null ? (
+                      <span className={styles.entryCounting}>
+                        개표 중 · {r.sum}표
+                      </span>
+                    ) : (
+                      <>
+                        <span className={styles.entryPct}>{Math.round(r.myPct)}%</span>
+                        <span className={r.minor ? styles.tagMinor : styles.tagMajor}>
+                          {r.minor ? '소수' : '다수'}
+                        </span>
+                        <span className={styles.entrySum}>{r.sum}표</span>
+                      </>
+                    )}
+                  </p>
+                </li>
+              ))}
+            </ul>
+
+            <p className={styles.ledgerNote}>
+              ※ 비율은 <strong>지금</strong> 기준입니다. 투표 당시의 비율은 기록하지 않으므로
+              &ldquo;그때와 지금&rdquo;을 비교해 드릴 수는 없습니다.
+            </p>
+          </section>
 
           <p className={styles.statement}>
             위 사람은 위와 같이 투표하였으며,

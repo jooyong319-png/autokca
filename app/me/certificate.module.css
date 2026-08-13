@@ -168,3 +168,102 @@
   line-height: 1.7;
   color: var(--ink-soft);
 }
+
+/* ─── 기표 내역 (2026-08-13) ─────────────────────────────
+   "내가 무엇에 어떻게 투표했나". 이게 없어서 볼 곳이 없었다.
+   공문서의 별지 목록 조판 — 괘선으로 나눈 행, 좌측 문서번호. */
+.ledger {
+  border-top: 2px solid var(--ink);
+  padding-top: 0.9rem;
+}
+.ledgerHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+.ledgerTitle {
+  margin: 0;
+  font-family: var(--f-doc);
+  font-size: 0.86rem;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  color: var(--ink-soft);
+}
+.ledgerSum {
+  font-family: var(--f-mono);
+  font-size: 0.66rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.list { margin: 0; padding: 0; list-style: none; }
+.entry {
+  border-top: 1px solid var(--rule);
+  padding: 0.6rem 0 0.55rem;
+}
+.entry:first-child { border-top: 0; }
+
+.entryLink {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  text-decoration: none;
+  color: inherit;
+}
+.entryLink:hover .entryQ { color: var(--seal); }
+.entryNo {
+  flex: 0 0 auto;
+  font-family: var(--f-mono);
+  font-size: 0.6rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+.entryQ {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.45;
+}
+
+.entryMeta {
+  margin: 0.25rem 0 0;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  font-family: var(--f-mono);
+  font-size: 0.66rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+/* 내가 고른 쪽 — 인주색 밑줄. 색만으로 알리지 않는다(왼쪽 첫 자리가 곧 내 표다) */
+.entryMine {
+  font-family: var(--f-sans);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink);
+  border-bottom: 1px solid var(--seal);
+}
+.entryPct { color: var(--ink-soft); font-weight: 700; }
+.entrySum { color: var(--rule-strong); }
+.entryCounting { color: var(--ink-faint); }
+
+/* 소수/다수 — 테두리 배지. `--seal`은 용지 위 5.33:1이라 이 크기에서도 대비가 된다 */
+.tagMinor,
+.tagMajor {
+  letter-spacing: 0.1em;
+  border-radius: 2px;
+  padding: 0.08rem 0.3rem;
+}
+.tagMinor { color: var(--seal); border: 1px solid var(--seal); font-weight: 700; }
+.tagMajor { color: var(--ink-faint); border: 1px solid var(--rule); }
+
+.ledgerNote {
+  margin: 0.8rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.7;
+  color: var(--ink-faint);
+}
