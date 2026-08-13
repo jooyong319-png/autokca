@@ -65,11 +65,19 @@
  *    띄워야 해서 이번에 고친 문제가 되살아나고, max-height는 긴 질문에서 내용이
  *    넘치는데 잘라낼 수도 없다(아래 overflow 주석 참고). 큰 화면에서는 긴 공문서가 된다. */
 .slide {
-  min-height: calc(100vh - 8.5rem);  /* 폴백 */
-  min-height: calc(100dvh - 8.5rem); /* 주소창을 뺀 실제 화면(§2-4) */
+  min-height: calc(100vh - 9.5rem);  /* 폴백 */
+  min-height: calc(100dvh - 9.5rem); /* 주소창을 뺀 실제 화면(§2-4) */
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
+
+  /* 🔴 슬라이드 사이 간격은 **여기서** 줘야 한다.
+     `.stage { gap: 1.1rem }`은 슬라이드에 적용되지 않는다 — 슬라이드는 `.stage`의
+     직계 자식이 아니라 Feed 래퍼(`.snap-feed`) 안에 있고, 그 래퍼는 flex가 아니다.
+     그래서 카드끼리 맞붙어 있었다. 별개의 서류인데 경계가 없으면 한 장처럼 보인다.
+     `margin`은 스냅 정렬에 영향을 주지 않는다(그건 `scroll-margin`이다). */
+  position: relative;
+  margin-bottom: 1.6rem;
 
   scroll-snap-align: start;
   /* 빠른 스와이프로 여러 장을 건너뛰지 않게 한다(§2-3) */
@@ -127,10 +135,17 @@
 
    **첫 슬라이드에만** 붙인다 — 103장 전부에 붙이면 소음이고, 한 번 넘겨 보면
    제스처는 이미 학습된다. 스크롤하면 자연히 화면에서 사라진다. */
+/* 🔴 **흐름에서 뺀다.** 슬라이드 안에 두면 그만큼 첫 카드만 짧아져서,
+   "1번과 2번 사이엔 공간이 있는데 2번과 3번 사이엔 없다"로 보인다.
+   카드 아래 간격(margin-bottom) 안에 절대 배치하면 카드 높이가 전부 같아진다.
+   translateX를 안 쓰는 이유: bob 애니메이션이 transform을 쓰므로 충돌한다. */
 .cue {
-  align-self: center;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1.45rem;
+  text-align: center;
   margin: 0;
-  padding-top: 0.1rem;
   font-family: var(--f-mono);
   font-size: 0.68rem;
   letter-spacing: 0.14em;

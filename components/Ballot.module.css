@@ -129,15 +129,27 @@
   letter-spacing: -0.025em;
   align-self: center;
 }
+/* 🔴 `.slot`(점선 자리)과 `.seal`(도장)을 **같은 칸에 겹쳐** 놓는다.
+ *
+ *  둘 다 DOM에 있는 형제인데, 안 찍힌 상태의 `.seal`은 `opacity: 0`일 뿐
+ *  **레이아웃 자리는 그대로 차지한다.** flex row였을 때 60px 두 개가 나란히 놓여서:
+ *    · 데스크톱 — 보이는 점선 원이 정중앙에서 30px 왼쪽으로 밀렸다
+ *    · 모바일   — 96px가 84px 칸을 넘어 각각 42px로 찌그러져 타원이 됐다
+ *  찍히면 `.slot`이 `display: none`이 되어 도장만 정중앙에 오므로, 찍는 순간 위치가 튀었다.
+ *
+ *  도장을 44px에서 60px로 키우면서 어긋남이 22px → 30px로 커져 눈에 띈 것이고,
+ *  원인 자체는 그 전부터 있었다.
+ *
+ *  grid 한 칸에 둘을 겹치면 무엇이 보이든 항상 같은 자리다. */
 .box {
   flex: 0 0 auto;
   width: clamp(84px, 24%, 130px);
   min-height: clamp(74px, 10.5vh, 98px);
   border-left: 1px solid var(--ink);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
 }
+.box > * { grid-area: 1 / 1; }
 .choice:hover:not(:disabled) .box { background: var(--sunken); }
 
 /* 🔴 빈 도장 칸이 데스크톱 허전함의 가장 큰 원인이었다(2차 §4).
