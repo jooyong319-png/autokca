@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { topicBySlug, type Question } from '@/lib/questions';
 import type { TopPair } from '@/lib/comments';
+import { CardSay } from './CardSay';
 import type { Tally } from '@/lib/votes';
 import { SITE } from '@/lib/site';
 import { TIER, resultNotice, showsResult, showsVerdict, stageOf, totalOf } from '@/lib/tiers';
@@ -71,6 +72,9 @@ export function Ballot({
   const [copied, setCopied] = useState(false);
   /** 서버가 기표를 거절한 이유. 잠긴 상태에서 다른 쪽을 누르면 채워진다. */
   const [denied, setDenied] = useState<string | null>(null);
+  /** 이 카드에서 방금 사유를 올렸는지. 서버 값(`server.wrote`)과 OR로 합친다 —
+   *  올린 직후 다시 물어보지 않고도 기표가 잠겨야 한다. */
+  const [justWrote, setJustWrote] = useState(false);
   const busy = useRef(false);
 
   /* 🔴 투표 여부의 진실은 **서버 쿠키**에 있다. localStorage는 첫 화면을 빠르게 그리는
@@ -82,7 +86,7 @@ export function Ballot({
      서버 응답이 오기 전에는 **잠기지 않은 것으로 본다** — 낙관해도 서버가 409로
      되돌리고 이유를 알려주므로 사용자가 갇히지 않는다. 반대로 비관하면
      아직 사유를 안 쓴 사람도 잠긴 화면을 잠깐 보게 된다. */
-  const locked = server?.wrote ?? false;
+  const locked = justWrote || (server?.wrote ?? false);
 
   useEffect(() => {
     const mine = readJSON<Record<string, Choice>>(VOTED_KEY, {})[question.id];
@@ -149,10 +153,13 @@ export function Ballot({
           body: JSON.stringify({ id: question.id, choice: ch }),
         });
         const next = (await res.json().catch(() => null)) as
-          | (Tally & { myVote: Choice | null; error?: string })
+          | (Tally & { myVote: Choice | null; error?: string; note?: string })
           | null;
 
         if (res.ok && next) {
+          /* 번복 직후 카피(7차 §2-6). 서버가 남은 횟수까지 넣어 준다 —
+             몇 번 남았는지는 서버 쿠키만 알고 있으므로 화면이 셀 수 없다. */
+          if (next.note) setDenied(next.note);
           if (next.myVote) setChoice(next.myVote);
           if (next.live) setTally({ a: next.a, b: next.b, live: true });
           const voted = readJSON<Record<string, Choice>>(VOTED_KEY, {});
@@ -271,6 +278,16 @@ export function Ballot({
 
   const Heading = heading;
   const topic = topicBySlug(question.topic);
+
+  /* 🔴 상황별 유도 문구(7차 §3-4). **소수파일 때가 가장 잘 작동한다** —
+     사람은 자기가 소수일 때 설명하고 싶어진다.
+     팽팽한 구간(45~55%)을 먼저 보는 이유: 소수파여도 반반이면 "소수 의견"이 아니다. */
+  const sayPlaceholder = (() => {
+    if (!choice) return '왜 그런지 한 줄로';
+    if (Math.abs(myPct - 50) <= 5) return '지금 딱 반반입니다. 한 표의 근거를.';
+    if (myPct < 50) return '소수 의견이십니다. 사유를 밝혀 주십시오.';
+    return '다들 그렇다는데, 이유는요?';
+  })();
 
   const bar = (key: Choice, name: string, pct: number) => (
     <div className={`${styles.bar} ${lead === key ? styles.lead : ''}`}>
@@ -451,6 +468,19 @@ export function Ballot({
           );
         })}
       </div>
+
+      {/* 🔴 투표 직후 카드 안에서 바로 한 줄(7차 §3).
+       *  결과가 나온 뒤에만 띄운다 — 결과가 투표의 보상이고, 개표 중인 상태에서
+       *  입력창을 띄우면 **무엇에 반응해서 쓰라는 것인지** 알 수 없다(§1).
+       *  이미 썼으면 감춘다(1안건 1의견). */}
+      {hasResult && choice && !locked && (
+        <CardSay
+          questionId={question.id}
+          sideLabel={question[choice]}
+          placeholder={sayPlaceholder}
+          onWrote={() => setJustWrote(true)}
+        />
+      )}
 
       <div className={styles.acts}>
         <button type="button" className={`${styles.btn} ${styles.btnSeal}`} onClick={share}>

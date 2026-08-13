@@ -24,8 +24,15 @@ function shape(raw: unknown): Tally {
 }
 
 /** 현재 집계 읽기 — 서버에서 그릴 때 쓴다(결과가 HTML에 담겨야 색인된다). */
-export async function readTally(questionId: string): Promise<Tally> {
-  const raw = await rpc('read_tally', { qid: questionId }, 60);
+/** @param fresh 캐시를 건너뛴다.
+ *
+ *  🔴 `/api/vote`처럼 **그 사람에게 진실을 돌려주는 곳**에서는 반드시 `true`다.
+ *  60초 캐시를 그대로 쓰면 방금 들어간 표가 안 보이는 값을 돌려주고,
+ *  화면은 "서버가 진실"이라는 규칙대로 그 낡은 값으로 자기를 덮는다 —
+ *  실제로 같은 쪽 재클릭에서 `a=1`인 DB를 두고 `a=0`을 받았다.
+ *  페이지 렌더(ISR)에서는 60초 캐시가 맞으므로 기본값은 그대로 둔다. */
+export async function readTally(questionId: string, fresh = false): Promise<Tally> {
+  const raw = await rpc('read_tally', { qid: questionId }, fresh ? false : 60);
   return raw === null ? EMPTY : shape(raw);
 }
 

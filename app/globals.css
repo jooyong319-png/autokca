@@ -88,6 +88,23 @@
   --header-h: 3.2rem;
   --header-gap: 0.7rem;
   --header-clear: calc(var(--header-h) + var(--header-gap));
+
+  /* 종이 폭. `fixed` 헤더가 `.stage` 밖에 있어서 같은 값을 공유해야 정렬이 맞는다.
+     그래서 `.stage`에 걸던 `:has()`를 **body로 올렸다**(아래). */
+  --stage-w: 720px;
+}
+
+/* 🔴 투표용지가 있는 페이지만 넓힌다 — 카드 실폭 ≈ 860px(4차 §2-1).
+ *
+ *  `.stage:has(.ballot)`이 아니라 **`body:has(.ballot)`**에 건다.
+ *  헤더가 `fixed`로 `.stage` 밖으로 나갔으므로 `.stage`에 걸면 헤더가 그 값을 못 받고
+ *  워드마크와 카드의 좌우가 어긋난다. body에 두면 둘 다 상속한다.
+ *
+ *  홈·상세만 넓어지고 목록(`/q`·`/best`·`/c`)과 법적 고지는 720px로 남는다 —
+ *  그쪽은 산문이라 한 줄이 길어지면 읽기 나빠진다.
+ *  미지원 브라우저는 720px에 머문다(기능 손실 없음). */
+body:has(.ballot) {
+  --stage-w: 894px;
 }
 
 /* 🔴 다크 테마를 두지 않는다 — **라이트 하나만** (2026-08-13, 사용자 결정).
@@ -126,6 +143,11 @@ html, body { margin: 0; padding: 0; }
  */
 html {
   scroll-snap-type: y proximity;
+  /* 🔴 스냅·앵커 오프셋을 **스크롤 컨테이너 한 곳**에서 준다(7차 §5-3).
+     전에는 `.slide`와 `:target`에 `scroll-margin-top`을 각각 걸었는데,
+     두 곳이 갈라질 수 있고 새 앵커를 만들 때마다 기억해야 했다.
+     `scroll-padding-top`은 이 컨테이너로 들어오는 **모든** 스크롤에 적용된다. */
+  scroll-padding-top: var(--header-clear);
 }
 
 /* 키보드(↑↓·PageUp/Down·Space)는 **네이티브가 이미 처리한다.**
@@ -177,37 +199,15 @@ body::before {
    1900px 화면에서 좌우 배경이 65%를 차지하던 문제. 720이면 질문 제목이 한 줄에
    들어가는 경우가 늘어 리듬도 좋아진다. 그 이상 넓히면 모바일 감각과 어긋난다. */
 .stage {
-  max-width: 720px;
+  max-width: var(--stage-w);
   margin: 0 auto;
-  padding: 1.6rem 1.1rem 3.5rem;
+  /* 🔴 위 패딩이 `fixed` 헤더의 자리다. 헤더가 흐름에서 빠졌으므로
+     이만큼 밀지 않으면 첫 화면에서 헤더가 태그라인을 덮는다. */
+  padding: calc(var(--header-h) + 0.9rem) 1.1rem 3.5rem;
   display: flex;
   flex-direction: column;
   gap: 1.1rem;
 }
-
-/* 🔴 **투표용지가 있는 페이지만** 넓힌다 — 카드 실폭 ≈ 860px(4차 §2-1).
- *
- *  한 화면 = 한 카드는 **카드가 화면을 지배할 때만** 성립한다. 720px 카드는
- *  1900px 화면 중앙에 놓인 작은 종이였다.
- *
- *  처음엔 홈(`.snap-feed`)만 넓혔는데 **상세가 구버전으로 남았다.** 검색 유입은 대부분
- *  상세로 착지하므로(브리프 원칙 1) 그게 첫인상인데 홈과 딴 사이트처럼 보였다.
- *  → 기준을 "스냅 피드가 있나"에서 **"투표용지가 있나"**로 바꿨다.
- *
- *  이러면 홈·상세만 넓어지고 목록(`/q`·`/best`·`/c`)과 법적 고지는 720px로 남는다.
- *  그쪽은 산문이라 한 줄이 길어지면 읽기 나빠진다.
- *  헤더·푸터도 같은 stage 안이라 함께 넓어져서 카드와 정렬이 맞는다.
- *  미지원 브라우저는 720px에 머문다(기능 손실 없음). */
-.stage:has(.ballot) {
-  max-width: 894px;
-}
-
-/* 🔴 앵커로 이동하는 **모든** 대상은 sticky 헤더 아래에 멈춘다.
- *
- *  없으면 대상이 y=0에 붙어 헤더가 그 머리를 덮는다. 실제로 걸리는 곳:
- *  `#왜-그런지`(댓글 섹션 제목) · `#<슬러그>`(상세의 "다음 질문 →" 앵커).
- *  `:target`만 걸면 되는데 스크롤 위치 계산 시점에 이미 매칭되므로 충분하다. */
-:target { scroll-margin-top: var(--header-clear); }
 
 /* 숫자는 예외 없이 등폭 — 득표율이 흔들리면 개표가 아니게 된다 */
 .num {
@@ -240,39 +240,57 @@ body::before {
    무한 스크롤로 내려가면 헤더가 사라져 사이트 정체를 알 수 없었다(2차 §6-4).
    그래서 **로고 줄만 sticky로 고정**한다 — 태그라인까지 붙이면 화면을 잡아먹는다.
    배경을 --room으로 깔아야 카드가 헤더 아래로 지나갈 때 겹쳐 보이지 않는다. */
+/* 🔴 `sticky` → `fixed`(7차 §5-3).
+ *
+ *  sticky는 **containing block 안에서만** 붙는다. `.masthead-bar`의 부모가
+ *  `.masthead`(바 51px + 태그라인 24px ≈ 78px)였으므로 **27px만 스크롤하면**
+ *  sticky 구간이 끝나고 헤더가 그대로 밀려 올라갔다. "스크롤하면 헤더가 사라진다"의 원인.
+ *
+ *  문서(7차 §5-3)는 `overflow-y: scroll` 컨테이너를 원인으로 짚었지만 이 사이트에는
+ *  그런 래퍼가 없다 — 문서(html)가 스크롤 컨테이너다. 별도 컨테이너로 바꾸면
+ *  헤더·푸터가 그 밖으로 밀려 레이아웃을 다시 짜야 하므로 채택하지 않았다.
+ *  `fixed`는 부모와 무관하게 뷰포트에 붙어 원인만 정확히 제거한다. */
 .masthead {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-.masthead-bar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 10;
-  display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
-  /* 🔴 높이를 토큰으로 고정한다 — 내용이 늘어도 스냅 오프셋을 넘어서지 못하게.
-     `* { box-sizing: border-box }`라 패딩·경계선이 이 값 안에 들어온다. */
-  min-height: var(--header-h);
-  padding: 0.55rem 0 0.45rem;
-  margin: -0.55rem 0 0;
   background: var(--room);
   border-bottom: 1px solid transparent;
+}
+/* 스크롤이 시작되면 경계선을 드러낸다 — 항상 켜 두면 첫 화면이 답답하다 */
+@supports (animation-timeline: scroll()) {
+  .masthead {
+    animation: sticky-edge linear both;
+    animation-timeline: scroll();
+    animation-range: 0 80px;
+  }
+}
+
+/* 🔴 `fixed`는 뷰포트 기준이라 `.stage`의 max-width를 따라가지 않는다.
+   안쪽 줄에 **같은 폭·같은 좌우 패딩**을 다시 줘야 워드마크가 카드와 정렬된다.
+   폭 기준도 `.stage`와 같이 움직여야 하므로 `:has()` 대신 토큰으로 맞춘다. */
+.masthead-bar {
+  max-width: var(--stage-w);
+  margin: 0 auto;
+  min-height: var(--header-h);
+  /* 🔴 `line-height: 1`로 못 박는다. 상속값 1.6이면 워드마크(21px) 라인박스가 33.8px가 되고,
+     `align-items: baseline`에서 서로 다른 글자 크기의 베이스라인 정렬이 겹치면
+     콘텐츠 높이가 `--header-h`를 넘을 수 있다. 넘는 순간 스냅 오프셋이 다시 어긋나
+     헤더가 카드 머리를 덮는다(0.41px 사건과 같은 종류의 실패). */
+  line-height: 1;
+  padding: 0.5rem 1.1rem 0.45rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
 }
 /* 홈 피드의 진행 표시가 포털로 들어온다(4차 §3-1). 로고 반대쪽 끝에 붙여
    로고 + 진행 표시가 하나의 문서 머리글로 읽히게 한다. */
 .masthead-slot { margin-left: auto; }
 /* 스크롤이 시작되면 경계선을 드러낸다 — 항상 켜 두면 첫 화면이 답답하다 */
-@supports (animation-timeline: scroll()) {
-  .masthead-bar {
-    animation: sticky-edge linear both;
-    animation-timeline: scroll();
-    animation-range: 0 80px;
-  }
-  @keyframes sticky-edge {
-    to { border-bottom-color: var(--rule); }
-  }
+@keyframes sticky-edge {
+  to { border-bottom-color: var(--rule); }
 }
 .wordmark {
   font-size: 1.32rem;
@@ -283,6 +301,7 @@ body::before {
 }
 .wordmark em { font-style: normal; color: var(--seal); }
 .masthead-tagline {
+  margin: 0;
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: -0.03em;

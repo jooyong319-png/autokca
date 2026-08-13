@@ -17,6 +17,25 @@ export function commentCookieName(id: string): string {
   return `c_${idSlug(id)}`;
 }
 
+/** 번복 횟수(7차 §2-5). 질문당 3회까지. */
+export function revisionCookieName(id: string): string {
+  return `r_${idSlug(id)}`;
+}
+
+/** 번복 쿨다운. 🔴 값이 아니라 **쿠키의 만료 자체가 쿨다운**이다 —
+ *  타임스탬프를 넣고 비교하면 시계 차이·문자열 파싱이 새 실패 지점이 된다.
+ *  이 쿠키가 있으면 아직 쿨다운 중이라는 뜻이고, 없으면 끝난 것이다. */
+export function cooldownCookieName(id: string): string {
+  return `rc_${idSlug(id)}`;
+}
+
+/** 지금까지 몇 번 번복했는지. 숫자가 아니면 0으로 본다. */
+export function readRevisions(request: Request, id: string): number {
+  const raw = readCookie(request, revisionCookieName(id));
+  const n = Number(raw);
+  return Number.isInteger(n) && n > 0 ? n : 0;
+}
+
 export function readCookie(request: Request, name: string): string | null {
   const jar = request.headers.get('cookie');
   if (!jar) return null;

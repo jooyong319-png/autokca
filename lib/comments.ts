@@ -17,7 +17,12 @@ export interface Comment {
 }
 
 export const MAX_LENGTH = 80;
-const MIN_LENGTH = 2;
+/* 🔴 7차 §3-6 — 2자 → 5자. 카드에서 바로 쓸 수 있게 문턱을 낮춘 대가로
+   "ㅇㅈ"·"ㅋㅋ"만 쌓이면 **SEO 본문 역할을 못 한다.**
+   같은 절의 "연속 작성 쿨다운"은 넣지 않았다 — 1안건 1의견(쿠키)이 이미 도배를 막고,
+   문서 자신이 "초기에는 과하게 조이지 마세요. 지금은 댓글 0개가 스팸보다 큰 문제"라고 했다.
+   ⚠️ 대가: "당연하죠"(4자) 같은 정상 답변도 막힌다. 지금은 품질을 택했다. */
+const MIN_LENGTH = 5;
 
 /** 제로폭·비가시 문자. 글자 사이에 끼워 금칙어 필터를 우회하는 수법이 있어 먼저 지운다.
  *
@@ -56,7 +61,11 @@ export function validate(raw: unknown): Validation {
 
   const body = stripInvisible(raw).replace(/\s+/g, ' ').trim();
 
-  if (body.length < MIN_LENGTH) return { ok: false, reason: '너무 짧습니다.' };
+  /* 숫자를 문구에 하드코딩하지 않는다 — 최소 길이를 바꿨을 때 안내만 옛 값으로 남는다
+     (`Ballot.tsx`에 50이 박혀 있던 것과 같은 종류의 실패). */
+  if (body.length < MIN_LENGTH) {
+    return { ok: false, reason: `${MIN_LENGTH}자 이상 적어 주세요.` };
+  }
   if (body.length > MAX_LENGTH) {
     return { ok: false, reason: `${MAX_LENGTH}자 이내로 기재하십시오.` };
   }

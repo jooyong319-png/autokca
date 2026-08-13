@@ -1,0 +1,79 @@
+/* 카드 안의 한 줄 입력. 결과가 나온 **뒤에** 조용히 올라온다(7차 §3-3).
+   0.3s 늦추는 이유: 결과가 투표의 보상인데 입력창이 같이 뜨면 거래처럼 느껴진다.
+   ⚠️ reduced-motion에서는 애니메이션을 끄되 **보이기는 해야 한다** — 없애면 기능이 사라진다. */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  animation: rise 0.32s ease-out 0.3s both;
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .form { animation: none; }
+}
+
+.row {
+  display: flex;
+  gap: 0.4rem;
+}
+
+/* 관공서 서식의 기재란 — 밑줄이 아니라 네모 칸이다 */
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--f-sans);
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--sunken);
+  border: 1px solid var(--ink);
+  padding: 0.7rem 0.8rem;
+  min-height: 48px;
+}
+.input::placeholder { color: var(--ink-faint); }
+.input:focus-visible {
+  outline: 2px solid var(--seal);
+  outline-offset: 1px;
+  background: var(--paper);
+}
+
+.send {
+  flex: 0 0 auto;
+  font-family: var(--f-sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  min-height: 48px;
+  padding: 0.6rem 1.1rem;
+  background: var(--seal);
+  border: 1px solid var(--seal);
+  color: var(--on-seal);
+  cursor: pointer;
+}
+.send:hover:not(:disabled) { background: var(--ink); border-color: var(--ink); }
+.send:disabled { background: var(--rule); border-color: var(--rule); color: var(--paper); cursor: default; }
+
+.meta {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-family: var(--f-mono);
+  font-size: 0.66rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+.dot { color: var(--rule-strong); }
+/* --seal은 용지 위에서 5.33:1이라 이 크기에서도 대비가 충분하다 */
+.error { color: var(--seal); font-weight: 700; }
+
+.done {
+  margin: 0;
+  font-family: var(--f-doc);
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  border-top: 1px solid var(--rule);
+  padding-top: 0.7rem;
+}

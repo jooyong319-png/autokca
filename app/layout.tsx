@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { WebSiteJsonLd } from '@/components/JsonLd';
 import { TotalVotes } from '@/components/TotalVotes';
 import { SITE } from '@/lib/site';
+import { HeaderNav } from '@/components/HeaderNav';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -51,21 +52,36 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ko">
       <body>
         <WebSiteJsonLd />
+        {/* 🔴 7차 §5-3 — `sticky`에서 `fixed`로 바꿨다.
+         *
+         *  증상은 문서가 맞았다(스크롤하면 헤더가 사라진다). 원인은 달랐다:
+         *  `overflow-y: scroll` 컨테이너 때문이 **아니다** — 이 사이트는 문서(html)를
+         *  스크롤 컨테이너로 쓴다(4차에 문서화). 진짜 원인은 **sticky의 containing block**이
+         *  `.masthead`(높이 약 78px)라는 것이었다. 바가 51px이니 27px만 스크롤하면
+         *  sticky 구간이 끝나고 그대로 밀려 올라갔다.
+         *
+         *  그래서 문서가 제안한 별도 스크롤 컨테이너는 채택하지 않는다 — 그러면
+         *  헤더·푸터가 컨테이너 밖으로 밀려 레이아웃을 다시 짜야 한다.
+         *  `fixed`는 부모와 무관하게 뷰포트에 붙으므로 원인만 정확히 제거한다.
+         *
+         *  ⚠️ `fixed`는 흐름에서 빠지므로 `.stage`가 그만큼 위로 올라온다 →
+         *     globals.css에서 `.stage`에 `padding-top`으로 자리를 만든다.
+         */}
+        <header className="masthead">
+          <div className="masthead-bar">
+            <a className="wordmark" href="/">
+              오또케<em>?!</em>
+            </a>
+            <HeaderNav />
+            {/* 홈 피드의 진행 표시("제 1호 · 전체 103건")가 포털로 들어오는 자리(4차 §3-1).
+                다른 페이지에서는 빈 span으로 남는다. */}
+            <span id="feed-progress-slot" className="masthead-slot" />
+          </div>
+        </header>
+
         <div className="stage">
-          <header className="masthead">
-            {/* 로고 줄만 sticky — 무한 스크롤로 내려가도 사이트 정체가 남는다(2차 §6-4).
-                태그라인까지 고정하면 화면을 잡아먹는다. */}
-            <div className="masthead-bar">
-              <a className="wordmark" href="/">
-                오또케<em>?!</em>
-              </a>
-              {/* 🔴 홈 피드의 진행 표시("제 1호 · 전체 103건")가 포털로 들어오는 자리(4차 §3-1).
-                  전에는 헤더 아래에 따로 sticky로 떠 있어 소속이 불분명했다.
-                  다른 페이지에서는 빈 span으로 남는다. */}
-              <span id="feed-progress-slot" className="masthead-slot" />
-            </div>
-            <span className="masthead-tagline">{SITE.tagline}</span>
-          </header>
+          {/* 태그라인은 고정하지 않는다 — 화면을 잡아먹는다(2차 §6-4의 판단 유지) */}
+          <p className="masthead-tagline">{SITE.tagline}</p>
 
           {children}
 

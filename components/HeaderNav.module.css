@@ -1,0 +1,42 @@
+/* 머리글의 목차. 방(--room) 위에 있으므로 --room-* 토큰을 쓴다 —
+   용지용 --ink-*를 쓰면 배경 대비가 맞지 않는다. */
+.nav {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  font-family: var(--f-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.item {
+  color: var(--room-ink);
+  text-decoration: none;
+  padding: 0.3rem 0;
+  /* 현재 항목의 밑줄과 높이를 맞춰 둔다 — 켜질 때 글자가 움직이지 않게 */
+  border-bottom: 2px solid transparent;
+}
+.item:hover { border-bottom-color: var(--rule-strong); }
+
+/* 🔴 현재 위치는 **빨간 밑줄**(7차 §5-5). 색만으로 알리지 않는다 —
+   `aria-current="page"`가 스크린리더에, 밑줄이 눈에.
+   글자색은 --room-ink로 둔다: --seal은 --room 위에서 4.39:1로 이 크기에 미달한다
+   (globals.css의 --seal-ink 주석 참고). 색이 아니라 **선**이 정보를 나른다. */
+.current {
+  border-bottom-color: var(--seal);
+  font-weight: 700;
+}
+
+/* 항목 사이 가운뎃점 — 공문서의 나열 부호 */
+.item + .item::before {
+  content: '·';
+  color: var(--room-faint);
+  margin-right: 0.55rem;
+  font-weight: 400;
+}
+
+@media (max-width: 420px) {
+  .nav { gap: 0.4rem; font-size: 0.64rem; }
+  .item + .item::before { margin-right: 0.4rem; }
+}
