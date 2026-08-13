@@ -505,3 +505,13 @@
   opacity: 0.55;
   pointer-events: none;
 }
+
+/* "다음 안건"을 카드 **오른쪽 아래**로 밀어낸다.
+   왼쪽에는 공유·상세 링크가 남고, 진행 방향 동작만 반대쪽 끝에 선다 —
+   서류의 결재란처럼 읽힌다. */
+.btnNext { margin-left: auto; }
+@media (max-width: 480px) {
+  /* 좁은 화면에서 acts가 줄바꿈되면 margin-left:auto가 혼자 한 줄을 차지한다 →
+     그때는 가로로 꽉 채워 오른쪽 끝에 붙은 것처럼 보이게 한다. */
+  .btnNext { margin-left: 0; flex: 1 1 100%; justify-content: center; }
+}

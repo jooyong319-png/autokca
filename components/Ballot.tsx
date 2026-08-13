@@ -24,7 +24,9 @@ interface Props {
    *  대신 `nextSlug`로 다음 질문으로 보낸다. 검색 유입은 대부분 상세로 착지하므로
    *  여기서 이어지지 않으면 1PV로 끝난다(브리프 원칙 1). */
   standalone?: boolean;
-  /** 상세 페이지에서 아래 피드의 첫 질문 슬러그. 같은 화면 안이라 앵커로 보낸다. */
+  /** 다음 카드의 슬러그. 카드 오른쪽 아래 "다음 안건" 버튼이 여기로 내려간다.
+   *  상세에서는 아래 피드의 첫 안건, 피드에서는 바로 다음 카드다.
+   *  없으면(마지막 카드) 버튼이 나오지 않는다. */
   nextSlug?: string;
   /** 이 질문의 댓글 수. 카드에서 상세로 넘어갈 동기다(2차 §5) —
    *  댓글은 체류시간이자 SEO 본문이라 상세 유입이 곧 사이트 성장이다. */
@@ -76,6 +78,8 @@ export function Ballot({
    *  올린 직후 다시 물어보지 않고도 기표가 잠겨야 한다. */
   const [justWrote, setJustWrote] = useState(false);
   const busy = useRef(false);
+  /** "다음 안건"이 DOM에서 자기 위치를 찾을 때 쓴다(위 `goNext` 참고) */
+  const root = useRef<HTMLElement | null>(null);
 
   /* 🔴 투표 여부의 진실은 **서버 쿠키**에 있다. localStorage는 첫 화면을 빠르게 그리는
      힌트로만 쓰고, 서버 응답이 오면 그 값으로 덮는다. 둘이 어긋나면 사용자가
@@ -276,6 +280,28 @@ export function Ballot({
     }
   }, [pctA, pctB, question, stage]);
 
+  /* 다음 카드로 부드럽게 내려간다. 헤더 오프셋은 `html { scroll-padding-top }`이 처리한다.
+   *
+   * 🔴 `nextSlug`가 없어도 **버튼은 항상 있어야 한다.** 홈은 서버에서 카드를 1장만 심으므로
+   *   (개인화된 정렬을 `/api/feed`가 맡는다) 첫 렌더에는 다음 슬러그를 모른다.
+   *   그때 버튼을 감추면 피드가 도착하는 순간 버튼이 생겨 `.acts`가 줄바꿈되고
+   *   **카드 높이가 바뀌어 scroll-snap 위치가 흔들린다.**
+   *   → 자리는 항상 지키고, 목표는 누를 때 DOM에서 찾는다.
+   *
+   *   마지막 카드라 다음이 없으면 문서 끝으로 보낸다("질문을 다 보셨습니다"가 거기 있다). */
+  const goNext = useCallback(() => {
+    const known = nextSlug ? document.getElementById(nextSlug) : null;
+    if (known) {
+      known.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    const cards = Array.from(document.querySelectorAll<HTMLElement>('section.ballot'));
+    const here = root.current ? cards.indexOf(root.current) : -1;
+    const next = here >= 0 ? cards[here + 1] : null;
+    if (next) next.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    else window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }, [nextSlug]);
+
   const Heading = heading;
   const topic = topicBySlug(question.topic);
 
@@ -309,6 +335,7 @@ export function Ballot({
        투표용지가 있는 페이지(홈·상세)만 넓어지고, 목록(`/q`·`/best`·`/c`)과
        법적 고지는 산문이라 720px로 남는다. */
     <section
+      ref={root}
       className={`ballot ${styles.ballot} ${standalone ? styles.standalone : ''} ${
         thud ? styles.thud : ''
       }`}
@@ -504,20 +531,24 @@ export function Ballot({
           {copied ? '복사했습니다' : '공유'}
         </button>
 
-        {/* 🔴 상세 페이지에서 "이 질문만 보기"는 자기 자신을 가리킨다.
-            검색 유입은 대부분 상세로 착지하므로 여기서 다음으로 이어져야 1PV로 끝나지 않는다.
-            아래 피드가 같은 화면에 있으니 앵커로 보낸다 — 페이지를 다시 받을 이유가 없다. */}
-        {standalone ? (
-          nextSlug && (
-            <a className={styles.btn} href={`#${nextSlug}`}>
-              다음 질문 →
-            </a>
-          )
-        ) : (
+        {/* 🔴 상세 페이지에서 "이 질문만 보기"는 자기 자신을 가리킨다 — 그때는 감춘다. */}
+        {!standalone && (
           <a className={styles.btn} href={`/q/${encodeURIComponent(question.slug)}`}>
             이 질문만 보기 →
           </a>
         )}
+
+        {/* 🔴 "다음 안건"은 **카드 오른쪽 아래**에 붙는다(`margin-left: auto`).
+         *
+         *  화면에 떠 있는 고정 버튼으로 만들었다가 되돌렸다 — 카드와 무관한 자리에 떠서
+         *  무엇의 다음인지 읽히지 않았다. 카드 안에 있으면 "이 안건 다음"이 자명하다.
+         *
+         *  `<a href="#slug">`가 아니라 버튼인 이유: 앵커는 클릭마다 히스토리가 쌓여
+         *  카드 20장을 넘기면 뒤로가기를 20번 눌러야 한다. 같은 문서 안 이동이라
+         *  URL을 바꿀 이유도 없다. `scroll-behavior: smooth`가 있으므로 부드럽게 간다. */}
+        <button type="button" className={`${styles.btn} ${styles.btnNext}`} onClick={goNext}>
+          다음 안건 →
+        </button>
       </div>
     </section>
   );
