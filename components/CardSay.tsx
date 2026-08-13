@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { MAX_LENGTH } from '@/lib/comments';
 import styles from './CardSay.module.css';
 
@@ -22,6 +23,8 @@ import styles from './CardSay.module.css';
 
 interface Props {
   questionId: string;
+  /** 올린 뒤 이동할 상세 페이지의 슬러그 */
+  slug: string;
   /** 내가 기표한 쪽의 이름. "이 쪽으로 올라갑니다"에 쓴다. */
   sideLabel: string;
   /** 상황별 유도 문구(§3-4). 소수파일 때가 가장 잘 작동한다. */
@@ -30,10 +33,13 @@ interface Props {
   onWrote: () => void;
 }
 
-export function CardSay({ questionId, sideLabel, placeholder, onWrote }: Props) {
+export function CardSay({ questionId, slug, sideLabel, placeholder, onWrote }: Props) {
+  const router = useRouter();
   const [body, setBody] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
+  /** 서버가 돌려준 **실제** 댓글. 낙관적 표시가 아니라 확정된 값이다 →
+   *  8차 §7의 "롤백 처리"가 필요 없다(확인되지 않은 상태를 애초에 보여주지 않는다). */
+  const [posted, setPosted] = useState<{ id: number; body: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
   const submit = useCallback(
@@ -51,9 +57,31 @@ export function CardSay({ questionId, sideLabel, placeholder, onWrote }: Props) 
           body: JSON.stringify({ id: questionId, body }),
         });
         if (res.ok) {
-          setDone(true);
+          const created = (await res.json().catch(() => null)) as
+            | { id: number; body: string; side: string }
+            | null;
+          setPosted(created ? { id: created.id, body: created.body } : { id: 0, body });
           setBody('');
           onWrote();
+          /* 🔴 올린 뒤 **상세의 진영 칼럼으로 데려간다.**
+           *
+           *  방금 쓴 한마디가 어느 진영에 어떻게 걸렸는지 보는 것이 이 사이트의 보상이고
+           *  (진영 분리가 최대 차별점, 브리프 §4), 반대편 의견도 거기서 처음 마주친다.
+           *
+           *  브리프 원칙 2("돌려보내지 않는다")와 어긋나지 않는다 — 상세 페이지 아래에
+           *  **이어지는 피드가 그대로 있어서** 스크롤이 끊기지 않고 PV는 오히려 늘어난다.
+           *
+           *  ⚠️ 도착한 화면에 자기 댓글이 있어야 한다. 상세는 ISR 300초 + 목록 60초 캐시라
+           *  서버 HTML에는 없을 수 있다 → `Comments`가 마운트 즉시 한 번 받아오도록 고쳤다. */
+          /* 🔴 **0.9초 기다린 뒤** 이동한다(8차 §3-2).
+             누르자마자 화면이 바뀌면 등록됐는지 확인하지 못한 채 페이지가 전환되고,
+             모바일에서 한 번 깜빡이면 "오류가 났나" 하는 불안을 준다.
+             위에서 실제 댓글을 이미 그려 뒀으므로 그걸 눈으로 확인할 시간이다.
+             착지는 최상단이 아니라 **내 댓글**이다 — 맨 위로 보내면 질문을 다시 읽게 된다. */
+          const anchor = created?.id ? `#c-${created.id}` : '#왜-그런지';
+          window.setTimeout(() => {
+            router.push(`/q/${encodeURIComponent(slug)}${anchor}`);
+          }, 900);
           return;
         }
         const data = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -64,14 +92,18 @@ export function CardSay({ questionId, sideLabel, placeholder, onWrote }: Props) 
         setBusy(false);
       }
     },
-    [body, busy, onWrote, questionId],
+    [body, busy, onWrote, questionId, router, slug],
   );
 
-  if (done) {
+  if (posted) {
+    /* 등록 확인 → 이동. 서버가 돌려준 실제 본문을 그대로 보여준다. */
     return (
-      <p className={styles.done}>
-        접수했습니다. &ldquo;{sideLabel}&rdquo; 쪽에 기재되었습니다.
-      </p>
+      <div className={styles.done}>
+        <p className={styles.doneBody}>&ldquo;{posted.body}&rdquo;</p>
+        <p className={styles.doneMeta}>
+          &ldquo;{sideLabel}&rdquo; 쪽에 접수했습니다 · 반대편 의견을 보러 갑니다…
+        </p>
+      </div>
     );
   }
 

@@ -140,6 +140,14 @@ export default async function QuestionPage({ params }: Params) {
         live={isConfigured()}
       />
 
+      {/* 🔴 8차 §3-1(5단계)·§4 — 이탈 경로를 **명확히** 둔다.
+          카드에서 사유를 올리면 이 페이지로 자동 이동하는데, 나가는 길이 안 보이면
+          "상세에 갇힌다". 댓글을 읽고 나면 바로 다음 안건으로 넘어갈 수 있어야 한다.
+          앵커가 아니라 실제로 아래에 이어지는 피드가 있으므로 표지만 세운다. */}
+      <p className="handoff">
+        <a href={`#${seed[0]?.question.slug ?? ''}`}>↓ 다음 안건으로</a>
+      </p>
+
       {/* 여기서도 다음 질문으로 이어진다 — 원칙 2 */}
       <Feed initial={seed} excludeId={question.id} startOffset={2} />
     </>

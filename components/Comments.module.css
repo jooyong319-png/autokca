@@ -218,3 +218,28 @@
   color: var(--ink-faint);
   padding: 0.4rem 0;
 }
+
+/* 🔴 카드에서 사유를 올리고 착지한 내 댓글(8차 §3-3).
+ *
+ *  `:target`만 쓴다 — JS 타이머로 클래스를 붙이면 뒤로가기·새로고침에서 상태가 어긋나고,
+ *  같은 앵커를 다시 열었을 때 하이라이트가 안 켜진다. CSS는 URL을 따라가므로 항상 맞는다.
+ *
+ *  2초 뒤 사라진다(§3-1 4단계). `forwards`로 끝난 상태를 유지해야
+ *  애니메이션이 끝난 뒤 배경이 튀지 않는다. */
+.item:target {
+  animation: land 2s ease-out forwards;
+}
+@keyframes land {
+  0%, 55% { background: var(--seal-soft); box-shadow: inset 3px 0 0 var(--seal); }
+  100%    { background: transparent;      box-shadow: inset 3px 0 0 transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* 움직임은 끄지만 **어디에 착지했는지는 알려야 한다** — 표시를 없애면 기능이 사라진다 */
+  .item:target { animation: none; background: var(--seal-soft); box-shadow: inset 3px 0 0 var(--seal); }
+}
+
+/* 🔴 내 댓글 위로 **반대 진영 1위가 함께 보이게** 오프셋을 더 준다(8차 §3-3).
+   `html { scroll-padding-top }`(헤더 여유)에 이 값이 더해진다 —
+   딱 맞게 착지하면 "내 글이 등록됨"만 보이고 "다른 사람 의견"이 화면 밖에 남는다.
+   두 개가 한 화면에 들어와야 이 이동에 의미가 있다. */
+.item { scroll-margin-top: 7rem; }

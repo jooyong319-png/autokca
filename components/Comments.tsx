@@ -119,6 +119,11 @@ export function Comments({ question, initial, tops, counts, live }: Props) {
       }
     };
 
+    /* 🔴 마운트 즉시 한 번 받아온다. 전에는 `setInterval`만 걸어서 **첫 조회가 6초 뒤**였다.
+       상세는 ISR 300초 + `listComments` 60초 캐시라 서버 HTML이 최대 5분 낡을 수 있고,
+       특히 **카드에서 사유를 올린 직후 이 페이지로 넘어오면 자기 댓글이 없는 화면**에
+       도착한다. 도착하자마자 현재 상태로 맞춘다. */
+    pull();
     start();
     document.addEventListener('visibilitychange', onVisible);
     return () => {
@@ -214,7 +219,10 @@ export function Comments({ question, initial, tops, counts, live }: Props) {
   const crossTop = opposite ? top[opposite] : null;
 
   const commentItem = (c: Comment) => (
-    <li key={c.id} className={styles.item}>
+    /* 🔴 `id="c-<id>"`는 카드에서 사유를 올린 뒤 **내 댓글로 착지**하는 앵커다(8차 §3-3).
+       하이라이트는 `:target`으로 CSS만 쓴다 — JS 타이머를 두면 뒤로가기·새로고침에서
+       상태가 어긋난다. 헤더 오프셋은 `html { scroll-padding-top }`이 이미 처리한다. */
+    <li key={c.id} id={`c-${c.id}`} className={styles.item}>
       <p className={styles.body}>{c.body}</p>
       <div className={styles.meta}>
         <span className={styles.when}>{ago(c.createdAt)}</span>

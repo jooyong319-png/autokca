@@ -473,9 +473,13 @@ export function Ballot({
        *  결과가 나온 뒤에만 띄운다 — 결과가 투표의 보상이고, 개표 중인 상태에서
        *  입력창을 띄우면 **무엇에 반응해서 쓰라는 것인지** 알 수 없다(§1).
        *  이미 썼으면 감춘다(1안건 1의견). */}
-      {hasResult && choice && !locked && (
+      {/* ⚠️ 상세 페이지의 **주** 카드에서는 렌더하지 않는다 — 그 페이지에는 아래에
+          진짜 댓글 섹션(`Comments`)의 입력 폼이 이미 있어서 같은 화면에 입력창이 둘이 된다.
+          이어지는 피드의 카드들은 각자 다른 안건이므로 그대로 보여준다. */}
+      {!standalone && hasResult && choice && !locked && (
         <CardSay
           questionId={question.id}
+          slug={question.slug}
           sideLabel={question[choice]}
           placeholder={sayPlaceholder}
           onWrote={() => setJustWrote(true)}

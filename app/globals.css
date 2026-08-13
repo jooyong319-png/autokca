@@ -209,6 +209,26 @@ body::before {
   gap: 1.1rem;
 }
 
+/* 🔴 8차 §3-1(5단계)·§4 — 상세에서 나가는 길.
+   카드에서 사유를 올리면 상세로 자동 이동하는데, 나가는 표지가 없으면 "상세에 갇힌다".
+   앵커가 아래 피드의 첫 안건을 가리키므로 실제로 이어진다.
+   방(--room) 위에 있으므로 --room-* 토큰을 쓴다. */
+.handoff {
+  margin: 0;
+  text-align: center;
+  font-family: var(--f-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+}
+.handoff a {
+  color: var(--room-ink);
+  text-decoration: none;
+  display: inline-block;
+  padding: 0.6rem 1rem;
+  border-bottom: 2px solid transparent;
+}
+.handoff a:hover { border-bottom-color: var(--seal); }
+
 /* 숫자는 예외 없이 등폭 — 득표율이 흔들리면 개표가 아니게 된다 */
 .num {
   font-family: var(--f-mono);

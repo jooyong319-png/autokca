@@ -69,11 +69,26 @@
 /* --seal은 용지 위에서 5.33:1이라 이 크기에서도 대비가 충분하다 */
 .error { color: var(--seal); font-weight: 700; }
 
+/* 등록 확인 → 이동. 서버가 돌려준 **실제** 본문을 보여준다(8차 §3-1 1·2단계).
+   낙관적 표시가 아니므로 롤백 처리(§7)가 필요 없다 — 확인되지 않은 상태를 안 보여준다. */
 .done {
-  margin: 0;
-  font-family: var(--f-doc);
-  font-size: 0.9rem;
-  color: var(--ink-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
   border-top: 1px solid var(--rule);
   padding-top: 0.7rem;
+  animation: rise 0.24s ease-out both;
+}
+.doneBody {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--ink);
+  font-weight: 700;
+}
+.doneMeta {
+  margin: 0;
+  font-family: var(--f-mono);
+  font-size: 0.66rem;
+  color: var(--ink-faint);
 }

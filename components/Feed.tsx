@@ -134,7 +134,7 @@ export function Feed({ initial, excludeId, startOffset, snap = false, total }: P
   );
 
   return (
-    <div ref={wrap}>
+    <div ref={wrap} className={styles.wrap}>
       {/* 🔴 sticky 헤더 안으로 포털(4차 §3-1). 전에는 헤더 아래 따로 떠 있어
           소속이 불분명했다. 자리를 못 찾으면 아무것도 그리지 않는다 —
           진행 표시는 보조 정보라 없어도 이동에 지장이 없다. */}
