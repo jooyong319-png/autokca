@@ -289,3 +289,97 @@ as $$
   order by c.question_id, c.side, c.likes desc, c.created_at desc;
 $$;
 revoke all on function public.all_top_comments() from anon, authenticated;
+
+-- ─── 질문 후보·발행 (2026-08-15) ──────────────────────────────────
+--
+-- 🔴 **기존 103개는 코드(`lib/questions.ts`)에 그대로 둔다.** 여기는 그 뒤에 추가되는 것만 담는다.
+--
+--    왜 전부 옮기지 않는가: 질문이 전부 DB에 있으면 Supabase가 죽는 순간 **질문이 하나도
+--    없는 빈 사이트**가 된다. 지금 설계는 집계만 감추고 질문은 보인다 — 그 내성을 유지한다.
+--    코드의 103개가 항상 있는 바닥이고, 이 테이블은 그 위에 얹힌다.
+--
+-- 🔴 `id`는 `tallies.question_id`·`comments.question_id`와 같은 키다. 발행 후 절대 바꾸지 않는다.
+--    바꾸면 그 질문의 표와 댓글이 통째로 끊긴다.
+create table if not exists public.drafts (
+  id          text primary key,
+  slug        text not null unique,
+  q           text not null,
+  a           text not null,
+  b           text not null,
+  topic       text not null check (topic in
+                ('money','work','manners','life','office','commute','food','messenger')),
+  kind        text not null check (kind in ('serious','meme')),
+  -- null이면 대기, 값이 있으면 발행 시각. 발행된 것만 사이트에 나간다.
+  published_at timestamptz,
+  -- 자동 수집이 남기는 근거 한 줄(사람이 검수할 때 본다)
+  note        text,
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists drafts_published_idx on public.drafts (published_at);
+
+-- 발행된 질문만. 사이트가 코드의 103개와 **합쳐서** 쓴다.
+create or replace function public.published_questions()
+returns table (id text, slug text, q text, a text, b text, topic text, kind text)
+language sql
+security definer
+set search_path = public
+as $$
+  select d.id, d.slug, d.q, d.a, d.b, d.topic, d.kind
+  from public.drafts d
+  where d.published_at is not null
+  order by d.published_at;
+$$;
+revoke all on function public.published_questions() from anon, authenticated;
+
+-- 대기 중 + 발행됨 전체. **관리 화면에서만** 쓴다.
+create or replace function public.all_drafts()
+returns table (id text, slug text, q text, a text, b text, topic text, kind text,
+               published_at timestamptz, note text, created_at timestamptz)
+language sql
+security definer
+set search_path = public
+as $$
+  select d.id, d.slug, d.q, d.a, d.b, d.topic, d.kind, d.published_at, d.note, d.created_at
+  from public.drafts d
+  order by d.published_at nulls first, d.created_at desc;
+$$;
+revoke all on function public.all_drafts() from anon, authenticated;
+
+-- 후보 적재(자동 수집이 부른다). id가 겹치면 아무것도 하지 않는다 —
+-- 이미 발행된 질문을 덮어써서 문구가 바뀌면 이미 던져진 표가 다른 질문의 답이 되어 버린다.
+create or replace function public.add_draft(
+  d_id text, d_slug text, d_q text, d_a text, d_b text,
+  d_topic text, d_kind text, d_note text
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.drafts (id, slug, q, a, b, topic, kind, note)
+  values (d_id, d_slug, d_q, d_a, d_b, d_topic, d_kind, d_note)
+  on conflict do nothing;
+  return found;
+end;
+$$;
+revoke all on function public.add_draft(text, text, text, text, text, text, text, text)
+  from anon, authenticated;
+
+-- 발행 / 발행 취소. 🔴 **발행 취소는 표를 지우지 않는다** — 화면에서 내릴 뿐이다.
+-- 표를 지우면 "아까 N명이었는데"가 되고 그건 집계 신뢰를 깎는다.
+create or replace function public.set_draft_published(d_id text, on_off boolean)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update public.drafts
+     set published_at = case when on_off then coalesce(published_at, now()) else null end
+   where id = d_id;
+  return found;
+end;
+$$;
+revoke all on function public.set_draft_published(text, boolean) from anon, authenticated;
