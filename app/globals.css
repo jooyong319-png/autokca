@@ -315,14 +315,6 @@ body::before {
   text-decoration: none;
 }
 .wordmark em { font-style: normal; color: var(--seal); }
-.masthead-tagline {
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--seal);
-}
-
 /* 용지와 같은 재질의 작은 쪽지 — 부록 정보용 */
 .slips {
   display: grid;

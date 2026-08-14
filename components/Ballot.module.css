@@ -12,10 +12,21 @@
   color: var(--ink);
   border: 1px solid var(--paper-edge);
   box-shadow: var(--shadow);
-  padding: clamp(1.5rem, 3.4vh, 3.2rem) clamp(1.35rem, 3.2vw, 2.9rem);
+  /* 🔴 세로 여백과 줄간격은 **화면 높이에 연동**한다(vh). 폭(vw)이 아니다.
+   *
+   *  카드가 모바일에서 위아래로 잘렸다. 실측: 375×667에서 카드 717px,
+   *  쓸 수 있는 높이는 604.6px(화면 667 − 헤더여유 62.4)였다.
+   *  원인은 **카드 안의 고정 크기들이 화면이 짧아져도 그대로**였던 것이다 —
+   *  `.choices`(10.5vh)와 이 패딩만 vh였고 줄간격 0.95rem은 상수였다.
+   *  긴 화면에서 정한 값이 짧은 화면에 그대로 실려 카드가 화면을 넘겼다.
+   *
+   *  ⚠️ 잘라내는 방식(`max-height`+`overflow`)은 쓰지 않는다. 내용이 사라진다 —
+   *     그건 잘리는 문제를 "안 보이게" 만드는 것이지 고치는 게 아니다.
+   *     대신 **밀도를 화면에 맞춘다.** 넓고 긴 화면에서는 값이 그대로다. */
+  padding: clamp(1.1rem, 3.4vh, 3.2rem) clamp(1.35rem, 3.2vw, 2.9rem);
   display: flex;
   flex-direction: column;
-  gap: 0.95rem;
+  gap: clamp(0.5rem, 1.6vh, 0.95rem);
 }
 
 /* 🔴 카드가 슬라이드 높이를 다 먹었을 때, 내용이 위로 몰리고 아래가 비는 것을 막는다
@@ -160,7 +171,17 @@
 .box {
   flex: 0 0 auto;
   width: clamp(84px, 24%, 130px);
-  min-height: clamp(74px, 10.5vh, 98px);
+  /* 🔴 칸 높이의 바닥은 **도장 크기에서 나온다** — 임의의 74px가 아니다.
+   *
+   *  전에는 `clamp(74px, 10.5vh, 98px)`였다. 두 상수가 도장(`--stamp`)과 무관해서,
+   *  화면이 짧으면 칸이 도장보다 훨씬 크게 남아 기표칸 두 줄만 190px을 먹었다.
+   *  카드가 화면을 넘긴 원인 중 가장 큰 덩어리였다.
+   *
+   *  `max(도장+여유, min(8.5vh, 88px))` — 도장이 들어갈 만큼은 무조건 주고,
+   *  그 위로는 화면 높이를 따라간다. 상한 88px은 큰 화면에서 칸만 커지는 것을 막는다.
+   *  세로가 짧은 데스크톱 창(1440×700)에서도 도장 60px + 13.6px 여유가 보장된다 —
+   *  상수 바닥(62px)을 쓰면 그때 도장이 칸에 꽉 껴서 답답해진다. */
+  min-height: max(calc(var(--stamp) + 0.85rem), min(8.5vh, 88px));
   border-left: 1px solid var(--ink);
   display: grid;
   place-items: center;
@@ -274,10 +295,13 @@
 }
 
 /* ─── 개표 ─── */
+/* 🔴 개표 결과는 **투표 뒤에 새로 붙는 덩어리**다. 기표칸·인용·댓글 입력이 그대로 있는
+   위에 165px이 더 얹혀서 카드가 화면을 넘겼다. 여기 간격은 그 예산 안에서 잡는다 —
+   막대가 읽히는 데 필요한 만큼만 두고 나머지는 카드 전체의 리듬(`.ballot`의 gap)에 맡긴다. */
 .tally {
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
+  gap: 0.45rem;
 }
 .tallyHead {
   font-family: var(--f-doc);
@@ -285,10 +309,10 @@
   letter-spacing: 0.16em;
   color: var(--ink-soft);
   border-top: 1px solid var(--rule);
-  padding-top: 0.95rem;
+  padding-top: 0.6rem;
 }
 
-.bar { display: flex; flex-direction: column; gap: 0.3rem; }
+.bar { display: flex; flex-direction: column; gap: 0.25rem; }
 .barTop {
   display: flex;
   align-items: baseline;
@@ -321,7 +345,7 @@
   letter-spacing: -0.03em;
 }
 .track {
-  height: 13px;
+  height: 11px;
   background: var(--sunken);
   border: 1px solid var(--rule);
   overflow: hidden;
@@ -410,33 +434,47 @@
   border-top: 1px solid var(--rule);
   padding-top: 0.75rem;
 }
+/* 🔴 진영별 **세로 띠**. 이 자리에서 제일 먼저 읽혀야 하는 건 인용문이 아니라
+   "여기서부터 저쪽 편 말"이라는 경계다. 띠가 그 경계를 그린다. */
 .voice {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: baseline;
   gap: 0.6rem;
-  padding: 0.3rem 0;
+  padding: 0.3rem 0 0.3rem 0.7rem;
+  border-left: 4px solid var(--rule-strong);
   text-decoration: none;
   color: inherit;
 }
 .voice:hover .voiceBody { color: var(--seal); }
+/* 다수파만 인주색 — `.lead .fill`과 **같은 규칙**이다. 카드 안에서 인주색이
+   뜻하는 바가 두 개가 되면 색이 정보를 잃는다. 개표 전에는 켜지 않는다. */
+.voiceLead { border-left-color: var(--seal); }
 
 /* 진영 이름 — 투표 전에는 "한쪽/다른쪽"이라 폭이 들쑥거리지 않게 최소폭을 준다 */
 .voiceSide {
   min-width: 4.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   font-family: var(--f-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.06em;
-  color: var(--ink-faint);
+  /* 0.62rem → 0.74rem. 인용문(0.92rem)에 눌리지 않을 만큼은 되어야 한다 */
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+/* 이름만 줄인다 — 옆의 "내 표" 칩까지 말줄임에 먹히면 안 된다 */
+.voiceSideName {
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* 내가 기표한 쪽만 인주색 테두리로 표시 — 색만으로 구분하지 않는다 */
-.voiceMine .voiceSide {
-  color: var(--seal);
-  border-bottom: 1px solid var(--seal);
-}
+/* 🔴 내가 기표한 쪽은 **막대와 같은 방식**으로 알린다 — `.mineTag` 칩.
+   전에는 밑줄이었는데 진영 이름에 밑줄이 그어져 링크처럼 보였고,
+   무엇보다 "다수파 인주색"과 "내 표 인주색"이 뒤섞여 색이 두 가지를 뜻했다. */
+.voiceMine .voiceSide { color: var(--ink); }
 
 /* 한 줄로 자른다. 두 줄이 되면 카드 높이가 질문마다 달라진다.
    ⚠️ grid 아이템은 `min-width: auto`가 기본이라 내용보다 작아지지 않는다 —
@@ -466,9 +504,16 @@
   white-space: nowrap;
 }
 
-/* 좁은 화면에서는 진영 이름을 위로 올린다 — 3열이 들어가지 않는다 */
+/* 좁은 화면에서는 진영 이름을 위로 올린다 — 3열이 들어가지 않는다.
+ *
+ * 🔴 그러면 인용 하나가 **두 줄**이 된다(진영 이름 줄 + 본문 줄). `gap: 0.6rem`은
+ *    가로로 떨어뜨리라고 정한 값인데 세로로도 그대로 먹어서, 인용 두 개에만
+ *    24px이 붙었다. 세로 간격만 좁힌다 — 진영 이름은 바로 아래 인용의 꼬리표라
+ *    붙어 있는 편이 오히려 한 덩어리로 읽힌다. 가로 간격(본문↔추천수)은 그대로 둔다. */
 @media (max-width: 560px) {
-  .voice { grid-template-columns: 1fr auto; }
+  /* ⚠️ 왼쪽 패딩은 진영 띠(`border-left`)와 짝이라 여기서도 지켜야 한다 */
+  .voice { grid-template-columns: 1fr auto; row-gap: 0.15rem; padding: 0.15rem 0 0.15rem 0.6rem; }
+  .voices { padding-top: 0.5rem; }
   .voiceSide { grid-column: 1 / -1; min-width: 0; }
 }
 
@@ -515,8 +560,42 @@
    왼쪽에는 공유·상세 링크가 남고, 진행 방향 동작만 반대쪽 끝에 선다 —
    서류의 결재란처럼 읽힌다. */
 .btnNext { margin-left: auto; }
+
+/* 🔴 좁은 화면에서는 버튼 세 개를 **한 줄에** 넣는다.
+ *
+ *  전에는 "다음 안건"을 `flex: 1 1 100%`로 아래 한 줄에 깔았다. 줄바꿈된 버튼이
+ *  왼쪽에 홀로 서는 게 어색해서였는데, 그 대가가 **`.acts` 104px**였다 —
+ *  카드가 화면을 넘긴 높이의 절반이 여기였다.
+ *
+ *  글자와 좌우 패딩을 줄이면 셋이 들어간다. 실측(375px 폭, 카드 안쪽 294.8px):
+ *  공유 44.6 + 이 질문만 보기 133.6 + 다음 안건 87 + 간격 11.2 = 276.4 → 들어간다.
+ *  두 줄 104px → 한 줄 44px, **60px를 돌려받는다.**
+ *
+ *  ⚠️ 높이는 44px 아래로 내리지 않는다. 터치 목표 최소치다(4차 §2-4는 48px였지만
+ *     한 줄로 만드는 값어치가 4px보다 크다). 320px처럼 더 좁으면 그때는 줄바꿈되게
+ *     둔다 — `margin-left: auto`가 남아 있어 오른쪽 끝에 붙는다. */
+/* 🔴 **투표 뒤**의 카드는 투표 전보다 200px 크다 — 개표 막대(147)와 댓글 입력(70)이
+ *    새로 얹히기 때문이다. 투표 전 기준으로 맞춰 놓으면 도장을 찍는 순간 넘친다.
+ *    실측(390×844): 투표 전 692 → 투표 후 824, 쓸 수 있는 높이는 781.6.
+ *
+ *    그래서 **좁은 화면에서만** 한 단계 더 조인다. 데스크톱은 건드리지 않는다 —
+ *    거기서는 이미 27px 남고, 4차 §2-1이 "카드가 화면을 지배하려면 여백을 넓혀라"고
+ *    정한 값이다. 화면이 좁다는 사실 자체가 그 지침의 전제(큰 화면)를 벗어난다.
+ *
+ *    ⚠️ 세로 방향만 줄인다. 좌우를 줄이면 질문이 한 줄 더 접혀서 오히려 높아진다. */
+@media (max-width: 560px) {
+  .ballot {
+    padding-block: clamp(0.9rem, 2.6vh, 1.6rem);
+    gap: clamp(0.45rem, 1.3vh, 0.8rem);
+  }
+  .box { min-height: max(calc(var(--stamp) + 0.7rem), min(7.6vh, 80px)); }
+}
+
 @media (max-width: 480px) {
-  /* 좁은 화면에서 acts가 줄바꿈되면 margin-left:auto가 혼자 한 줄을 차지한다 →
-     그때는 가로로 꽉 채워 오른쪽 끝에 붙은 것처럼 보이게 한다. */
-  .btnNext { margin-left: 0; flex: 1 1 100%; justify-content: center; }
+  .acts { gap: 0.35rem; }
+  .btn {
+    font-size: 0.78rem;
+    padding: 0.5rem 0.55rem;
+    min-height: 44px;
+  }
 }

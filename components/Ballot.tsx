@@ -489,17 +489,34 @@ export function Ballot({
 
           ⚠️ 투표 전에는 진영 이름을 밝히지 않는다. 어느 쪽 의견이 우세한지 먼저 보이면
           밴드왜건이 생긴다 — 막대를 투표 후에만 보여주는 것과 같은 이유다. */}
+      {/* 🔴 **어느 세력의 말인지**를 인용보다 먼저 읽히게 한다.
+       *
+       *  전에는 진영 이름이 0.62rem 흐린 글씨였다. 인용문이 압도해서 두 줄이
+       *  "댓글 두 개"로 읽혔다 — 이 자리의 목적은 **양쪽이 갈라져 있다는 것**을
+       *  보여주는 건데 그게 안 보였다.
+       *
+       *  세 가지로 말한다: ① 진영별 세로 띠 ② 굵고 큰 진영 이름 ③ 내 표 칩.
+       *  띠 색은 카드가 이미 쓰는 언어를 그대로 따른다 — **다수파만 인주색**
+       *  (`.lead .fill`과 같은 규칙). 색만으로 구분하지 않으므로 이름과 칩이 함께 간다.
+       *
+       *  ⚠️ 다수파 표시는 `showsResult` 뒤에만 켠다. 개표 전에 우세를 흘리면
+       *     막대를 늦게 보여주는 이유(밴드왜건)가 무너진다. */}
       <div className={styles.voices}>
         {(['a', 'b'] as const).map(key => {
           const top = tops?.[key];
           return (
             <a
               key={key}
-              className={`${styles.voice} ${choice === key ? styles.voiceMine : ''}`}
+              className={`${styles.voice} ${choice === key ? styles.voiceMine : ''} ${
+                showsResult(stage) && lead === key ? styles.voiceLead : ''
+              }`}
               href={`/q/${encodeURIComponent(question.slug)}#왜-그런지`}
             >
               <span className={styles.voiceSide}>
-                {voted ? question[key] : key === 'a' ? '한쪽' : '다른쪽'}
+                <span className={styles.voiceSideName}>
+                  {voted ? question[key] : key === 'a' ? '한쪽' : '다른쪽'}
+                </span>
+                {choice === key && <span className={styles.mineTag}>내 표</span>}
               </span>
               {top ? (
                 <>
@@ -552,10 +569,14 @@ export function Ballot({
           {copied ? '복사했습니다' : '공유'}
         </button>
 
-        {/* 🔴 상세 페이지에서 "이 질문만 보기"는 자기 자신을 가리킨다 — 그때는 감춘다. */}
+        {/* 🔴 상세 페이지에서는 자기 자신을 가리킨다 — 그때는 감춘다.
+         *
+         *  문구가 "이 질문만 보기"였다. 페이지 **구조**를 설명하는 말이라
+         *  눌러서 뭘 얻는지가 안 보였다. 실제로 상세에서 얻는 것은 **댓글**이다 —
+         *  바로 위 인용 두 줄이 예고편이고 전문은 거기 있다. 그걸 그대로 말한다. */}
         {!standalone && (
-          <a className={styles.btn} href={`/q/${encodeURIComponent(question.slug)}`}>
-            이 질문만 보기 →
+          <a className={styles.btn} href={`/q/${encodeURIComponent(question.slug)}#왜-그런지`}>
+            댓글 확인 →
           </a>
         )}
 

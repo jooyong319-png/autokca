@@ -78,9 +78,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </header>
 
         <div className="stage">
-          {/* 태그라인은 고정하지 않는다 — 화면을 잡아먹는다(2차 §6-4의 판단 유지) */}
-          <p className="masthead-tagline">{SITE.tagline}</p>
-
+          {/* 🔴 태그라인을 **화면에서 뺐다**(2026-08-15, 사용자 결정).
+              워드마크 바로 아래에서 한 줄을 차지하면서 첫 카드를 밀어내고 있었다.
+              브랜드 문구는 `<title>`·OG에 남아 검색 결과와 공유 카드에서 계속 일한다 —
+              첫 화면에서까지 반복할 이유가 없다. */}
           {children}
 
           <footer className="site-footer">
