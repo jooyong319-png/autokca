@@ -84,8 +84,9 @@ export default async function HomePage() {
     })),
   );
 
-  /* 홈만 한 화면 = 한 질문으로 넘긴다(3차 §2-8).
-     상세 페이지는 댓글이 있어 자유 스크롤이 필요하므로 켜지 않는다. */
+  /* 한 화면 = 한 질문(3차 §2-8). **상세 페이지도 같이 켠다** — 스냅 지점은 이어지는
+     안건 카드에만 붙고 상세의 질문·댓글은 이 컴포넌트 밖이라 자유 스크롤 그대로다.
+     홈에서만 다른 것은 헤더 진행 표시와 첫 장 힌트(`progress`)다. */
   /* 🔴 `excludeId`로 심은 카드를 피드에서 뺀다. 홈의 순서(개인화 없음)와
      `/api/feed`의 순서(개인화)가 다르므로, 빼지 않으면 같은 안건이 두 번 나온다.
      그래서 `startOffset`도 0이다 — 개인화된 목록의 처음부터 받는다. */
@@ -95,6 +96,8 @@ export default async function HomePage() {
       excludeId={seed[0]?.question.id}
       startOffset={0}
       snap
+      /* 헤더 진행 표시("제 N호 · 전체 N건")와 첫 장 힌트는 홈에서만 낸다 — 아래 주석 참고 */
+      progress
       total={order.length}
     />
   );

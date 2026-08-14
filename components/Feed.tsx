@@ -26,9 +26,21 @@ interface Props {
   excludeId?: string;
   /** 서버가 미리 그린 개수. 여기서부터 이어 받는다. */
   startOffset: number;
-  /** 한 화면 = 한 질문으로 넘길지(3차 §2).
-   *  홈만 켠다. **상세 페이지는 끈다** — 댓글이 있어 자유 스크롤이 필요하다(§2-8). */
+  /** 한 화면 = 한 질문으로 넘길지(3차 §2). **홈·상세 둘 다 켠다.**
+   *
+   *  🔴 전에는 상세에서 껐다 — "댓글이 있어 자유 스크롤이 필요하다"(§2-8)는 이유였다.
+   *     그런데 스냅 지점은 `.slide`, 즉 **이어지는 안건 카드에만** 붙는다.
+   *     상세의 질문과 댓글은 이 컴포넌트 밖(위쪽)이라 애초에 스냅 대상이 아니다.
+   *     끌 이유가 없었고, 같은 카드가 홈에서는 걸리고 상세에서는 안 걸려
+   *     "상세에선 스크롤이 안 먹는다"로 보였다. */
   snap?: boolean;
+  /** 헤더의 진행 표시와 첫 장 힌트(`↓ 다음 안건`)를 낼지 — **홈 전용**.
+   *
+   *  🔴 스냅과 **분리한다.** 하나로 묶여 있었는데 둘은 성질이 다르다.
+   *     진행 표시("제 3호 · 전체 103건")는 이 피드가 곧 페이지 전체일 때만 참이다.
+   *     상세에서는 위에 이미 안건 하나가 있어 번호가 하나씩 어긋나고,
+   *     첫 장 힌트도 바로 위 "↓ 다음 안건으로"와 화살표가 겹쳐 소음이 된다. */
+  progress?: boolean;
   /** 전체 질문 수 — 진행 인디케이터에 쓴다 */
   total?: number;
 }
@@ -41,7 +53,14 @@ interface Props {
  *  스크롤 위치를 건드리지 않는다 — 밑에 덧붙이기만 한다. 위로 끼워 넣으면
  *  읽던 자리가 튀고, 그 순간 이탈한다.
  */
-export function Feed({ initial, excludeId, startOffset, snap = false, total }: Props) {
+export function Feed({
+  initial,
+  excludeId,
+  startOffset,
+  snap = false,
+  progress = false,
+  total,
+}: Props) {
   const [items, setItems] = useState<FeedItem[]>(initial);
   const [offset, setOffset] = useState(startOffset);
   const [done, setDone] = useState(false);
@@ -80,9 +99,9 @@ export function Feed({ initial, excludeId, startOffset, snap = false, total }: P
   }, [done, excludeId, offset]);
 
   useEffect(() => {
-    if (!snap) return;
+    if (!progress) return;
     setSlot(document.getElementById('feed-progress-slot'));
-  }, [snap]);
+  }, [progress]);
 
   useEffect(() => {
     const node = sentinel.current;
@@ -102,7 +121,7 @@ export function Feed({ initial, excludeId, startOffset, snap = false, total }: P
   /* 지금 몇 번째 카드를 보고 있는지 — 진행 인디케이터용(§2-7).
      화면 중앙을 지나는 슬라이드 하나만 현재로 잡는다. */
   useEffect(() => {
-    if (!snap || !wrap.current) return;
+    if (!progress || !wrap.current) return;
     const slides = Array.from(wrap.current.querySelectorAll<HTMLElement>(`.${styles.slide}`));
     if (!slides.length) return;
 
@@ -119,7 +138,7 @@ export function Feed({ initial, excludeId, startOffset, snap = false, total }: P
     );
     slides.forEach(x => observer.observe(x));
     return () => observer.disconnect();
-  }, [items.length, snap]);
+  }, [items.length, progress]);
 
 
   return (
@@ -127,7 +146,7 @@ export function Feed({ initial, excludeId, startOffset, snap = false, total }: P
       {/* 🔴 sticky 헤더 안으로 포털(4차 §3-1). 전에는 헤더 아래 따로 떠 있어
           소속이 불분명했다. 자리를 못 찾으면 아무것도 그리지 않는다 —
           진행 표시는 보조 정보라 없어도 이동에 지장이 없다. */}
-      {snap && slot &&
+      {progress && slot &&
         createPortal(
           <span className={styles.progress}>
             제 <b>{current}</b>호 · 전체 {(total ?? items.length).toLocaleString('ko-KR')}건
@@ -160,8 +179,9 @@ export function Feed({ initial, excludeId, startOffset, snap = false, total }: P
         return snap ? (
           <div key={item.question.id} className={styles.slide}>
             {card}
-            {/* 다음이 있다는 신호. 첫 장에만 — 103장 전부면 소음이다(4차 §3-2) */}
-            {i === 0 && <p className={styles.cue}>↓ 다음 안건</p>}
+            {/* 다음이 있다는 신호. 첫 장에만 — 103장 전부면 소음이다(4차 §3-2).
+                상세에서는 바로 위 "↓ 다음 안건으로"가 같은 말을 하므로 내지 않는다. */}
+            {progress && i === 0 && <p className={styles.cue}>↓ 다음 안건</p>}
           </div>
         ) : (
           <Fragment key={item.question.id}>{card}</Fragment>

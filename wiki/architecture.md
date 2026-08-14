@@ -12,7 +12,7 @@ Next.js 14 App Router · CSS 모듈 · TypeScript strict · Supabase(Postgres) �
 | 경로 | 렌더 | 역할 |
 |---|---|---|
 | `/` | ISR 60s | 피드. **scroll-snap 켜짐**(한 화면 = 한 질문) |
-| `/q/[slug]` | SSG + `dynamicParams: true` | 질문 상세. **검색 착지 페이지.** 댓글 + 이어지는 피드. 스냅 꺼짐 |
+| `/q/[slug]` | SSG + `dynamicParams: true` | 질문 상세. **검색 착지 페이지.** 댓글 + 이어지는 피드(스냅 켬, 진행 표시 없음) |
 | `/q` | ISR 1h | 질문 전체 목록 |
 | `/c/[topic]` | SSG | 주제 허브 8개. 크롤 경로 + "돈 관련 투표 모음" 롱테일 |
 | `/best` | ISR 30m | 집계 — 팽팽한/몰린/표 많은 질문 TOP 10 |
@@ -230,7 +230,7 @@ localStorage 기록으로 바꿨다.
 ## 한 화면 = 한 질문 (scroll-snap)
 
 **문서(html)를 스크롤 컨테이너로** 쓴다. 별도 래퍼를 만들면 sticky 헤더와 푸터가
-컨테이너 밖으로 밀려 레이아웃을 다시 짜야 한다. 스냅 지점(`.slide`)은 **홈 피드만** 내보내므로
+컨테이너 밖으로 밀려 레이아웃을 다시 짜야 한다. 스냅 지점(`.slide`)은 **피드만** 내보내므로
 다른 페이지는 영향을 받지 않고 클래스를 토글할 필요도 없다.
 
 - `proximity`를 쓴다. `mandatory`는 긴 카드의 중간 내용을 도달 불가로 만든다([[decisions]])

@@ -169,8 +169,13 @@ export default async function QuestionPage({ params }: Params) {
         <a href={`#${seed[0]?.question.slug ?? ''}`}>↓ 다음 안건으로</a>
       </p>
 
-      {/* 여기서도 다음 질문으로 이어진다 — 원칙 2 */}
-      <Feed key={question.id} initial={seed} excludeId={question.id} startOffset={2} />
+      {/* 여기서도 다음 질문으로 이어진다 — 원칙 2.
+          🔴 `snap`을 켠다. 전에는 껐는데("댓글이 있어 자유 스크롤") 스냅 지점은
+          `.slide`, 즉 **아래 이어지는 카드에만** 붙는다 — 위의 질문과 댓글은 이
+          컴포넌트 밖이라 애초에 대상이 아니었다. 끌 이유가 없었고, 같은 카드가
+          홈에서는 한 장씩 걸리고 상세에서는 안 걸려 스크롤이 고장 난 것처럼 보였다.
+          `progress`(헤더 진행 표시·첫 장 힌트)는 홈 전용이라 여기서는 켜지 않는다. */}
+      <Feed key={question.id} initial={seed} excludeId={question.id} startOffset={2} snap />
     </>
   );
 }
