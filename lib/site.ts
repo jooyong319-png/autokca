@@ -43,9 +43,63 @@ export const SITE = {
 
 /** 처리위탁 현황 — 개인정보처리방침이 그대로 참조한다.
  *  ⚠️ 실제로 붙이는 업체·리전이 바뀌면 **여기와 방침을 같이** 고쳐야 한다. */
+/* ─── 검색엔진 소유 확인 · 방문 통계 ──────────────────────────
+ *
+ * 🔴 이 값들은 **비밀이 아니다.** 셋 다 HTML에 그대로 박혀 누구나 볼 수 있다
+ *    (소유 확인 meta 2종, GA 측정 ID). 그래서 코드에 기본값으로 둔다.
+ *
+ *    환경변수만 쓰던 방식에서 바꿨다: 대시보드에 세 개를 따로 넣어야 하고,
+ *    하나라도 빠지면 조용히 태그가 사라지는데 화면으로는 알 수 없다.
+ *    코드에 있으면 배포와 함께 반드시 나가고 git 이력에도 남는다.
+ *
+ *    환경변수가 있으면 그쪽이 이긴다 — 도메인을 옮기거나 재발급받았을 때
+ *    코드를 고치지 않고 덮어쓸 수 있게 남겨 둔다.
+ */
+export const VERIFICATION = {
+  /** Google Search Console (2026-08-14 발급) */
+  google:
+    process.env.GOOGLE_SITE_VERIFICATION?.trim() ||
+    '0Mvr32IAbPGe4A48f68r6NNURo_db5XRKt8ZIxFpqU8',
+  /** 네이버 서치어드바이저 (2026-08-15 발급).
+   *  ⚠️ 한국 서비스라 네이버 비중이 크다 — 구글만 하고 끝내지 않는다. */
+  naver:
+    process.env.NAVER_SITE_VERIFICATION?.trim() ||
+    '83144607fa2dcca9f08c452fb85a7260f37de1d4',
+} as const;
+
+/** GA4 측정 ID. 실제 로드는 운영 배포에서만 일어난다(`components/Analytics.tsx`). */
+export const GA_ID = process.env.GA_MEASUREMENT_ID?.trim() || 'G-3G3YE7VYBS';
+
 export const PROCESSORS = [
   { name: 'Vercel Inc.', task: '웹사이트 호스팅 및 서버 로그 처리', region: '미국' },
   /* ap-northeast-2(서울). **국내 보관이라 Supabase 쪽은 국외 이전이 아니다.**
      리전을 옮기면 방침의 국외 이전 고지가 달라지므로 여기와 /privacy를 같이 고쳐야 한다. */
   { name: 'Supabase Inc.', task: '투표 집계 및 댓글 저장', region: '대한민국(서울)' },
 ] as const;
+
+/** 실제로 쓰는 처리 위탁 업체 목록.
+ *
+ *  🔴 Google Analytics는 **쓸 때만** 넣는다. 개인정보 처리방침은 실제와 맞아야 한다 —
+ *  안 쓰는 업체를 적어 두면 방침이 부정확해지고, 반대로 쓰는데 안 적으면 법령 위반이다.
+ *  `GA_MEASUREMENT_ID`가 설정된 배포에서만 목록에 들어간다.
+ *
+ *  ⚠️ 이 판단은 **서버에서만** 유효하다(환경변수를 읽는다). `/privacy`는 서버 컴포넌트다. */
+export interface Processor {
+  name: string;
+  task: string;
+  region: string;
+}
+
+export function processors(): readonly Processor[] {
+  /* `PROCESSORS`는 `as const`라 원소 타입이 리터럴이다 — 그대로 펼치면 새 항목을
+     넣을 수 없다. 여기서 한 번 넓힌다. */
+  const base: Processor[] = [...PROCESSORS];
+  if (GA_ID) {
+    base.push({
+      name: 'Google LLC',
+      task: '방문 통계 분석(Google Analytics)',
+      region: '미국',
+    });
+  }
+  return base;
+}

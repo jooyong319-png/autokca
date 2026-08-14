@@ -19,7 +19,24 @@ const nextConfig = {
         headers: [
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          /* 🔴 `X-Frame-Options: SAMEORIGIN`을 **CSP로 교체**했다.
+           *
+           *  구글 태그 어시스턴트는 사이트를 `tagassistant.google.com` 안에 **iframe으로 띄워서**
+           *  검사한다. SAMEORIGIN은 다른 오리진의 프레이밍을 전부 막으므로 어시스턴트가
+           *  페이지를 못 열고, GA 태그가 멀쩡해도 "감지되지 않음"이 뜬다.
+           *  (딱칼크에서 실제로 겪었다 — 통합 위키 `nextjs.md`)
+           *
+           *  `X-Frame-Options`에는 예외를 둘 수 없다(`ALLOW-FROM`은 폐기됐다).
+           *  CSP `frame-ancestors`는 허용 목록을 받는다. 나열한 도메인 외에는 그대로
+           *  차단되므로 클릭재킹 방어 수준은 유지된다.
+           *
+           *  ⚠️ 두 헤더가 함께 있으면 브라우저마다 우선순위가 갈리므로
+           *     `X-Frame-Options`는 **제거**한다. 남겨 두면 CSP가 무력해질 수 있다. */
+          {
+            key: 'Content-Security-Policy',
+            value:
+              "frame-ancestors 'self' https://tagassistant.google.com https://tagmanager.google.com",
+          },
         ],
       },
     ];

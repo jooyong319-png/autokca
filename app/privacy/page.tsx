@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { PROCESSORS, SITE } from '@/lib/site';
+import { PROCESSORS, SITE, processors } from '@/lib/site';
 import styles from '../legal.module.css';
 
 export const metadata: Metadata = {
@@ -120,7 +120,7 @@ export default function PrivacyPage() {
             </tr>
           </thead>
           <tbody>
-            {PROCESSORS.map(p => (
+            {processors().map(p => (
               <tr key={p.name}>
                 <td>{p.name}</td>
                 <td>{p.task}</td>

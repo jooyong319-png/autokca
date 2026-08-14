@@ -499,6 +499,48 @@ ISR 300초 + 목록 60초 캐시라 서버 HTML이 최대 5분 낡을 수 있고
 `/me`는 투표 목록 · 내 선택 · **현재** 비율 · 소수파 모음까지만 만든다.
 `ottoke:voted`에 무엇에 어떻게 투표했는지는 이미 다 있다.
 
+## 검색엔진 소유 확인 · GA4 (2026-08-15)
+
+값은 `lib/site.ts`의 `VERIFICATION`·`GA_ID`에 **코드로** 있다. 셋 다 HTML에 그대로 박히는
+공개값이라 비밀이 아니다. 환경변수(`GOOGLE_SITE_VERIFICATION`·`NAVER_SITE_VERIFICATION`·
+`GA_MEASUREMENT_ID`)가 있으면 그쪽이 이긴다 — 재발급·도메인 이전 때 코드를 안 고쳐도 되게.
+
+전에는 환경변수 전용이었는데 대시보드에 세 개를 넣어야 하고 **하나라도 빠지면 조용히
+태그가 사라진다**(화면으로는 알 수 없다). 코드에 두면 배포와 함께 반드시 나간다.
+
+### 🔴 분석 태그는 `next/script`를 쓰지 않는다
+
+`components/Analytics.tsx` — `<head>`에 **생 `<script>`**로 박는다.
+
+App Router에서 `strategy="afterInteractive"`가 만드는 SSR 응답에는 preload 힌트와
+**RSC 페이로드 문자열**뿐이고 실제 `<script>`는 하이드레이션 후에 주입된다.
+실제 브라우저에서는 동작하지만 **구글 태그 감지·서치콘솔·애드센스 심사는 못 본다**
+(HTML만 읽고 하이드레이션을 기다리지 않는다). 딱칼크에서 실제로 겪었다.
+
+⚠️ `curl | grep googletagmanager`는 preload·RSC 문자열에도 걸려 **통과한다.**
+검증은 문자열이 아니라 **형태**로 한다 — 진짜 `<script>`인지, `</head>` 앞인지.
+실측 결과 `[HEAD] real <script>` 확인.
+
+- 운영 배포에서만 로드한다: `VERCEL_ENV !== 'production'`이면 `null`.
+  **`NODE_ENV`로 가르면 안 된다** — `npm run build` 결과물은 로컬에서도 전부 `production`이라
+  내 발자국이 지표에 섞인다
+- 라우트 이동을 **수동 추적하지 않는다.** GA4 향상된 측정의 "브라우저 기록 이벤트 기반
+  페이지 변경"이 기본으로 켜져 있고 App Router는 `pushState`로 이동한다 —
+  `usePathname()`으로 또 쏘면 **이중 집계**가 된다
+
+### 🔴 `X-Frame-Options`를 CSP로 교체했다
+
+구글 태그 어시스턴트는 사이트를 `tagassistant.google.com` **iframe에 띄워서** 검사한다.
+`SAMEORIGIN`은 다른 오리진의 프레이밍을 전부 막으므로 태그가 멀쩡해도 "감지되지 않음"이 뜬다.
+
+`X-Frame-Options`에는 예외를 둘 수 없다(`ALLOW-FROM`은 폐기). CSP `frame-ancestors`로 바꿨다.
+⚠️ **두 헤더를 함께 두지 않는다** — 브라우저마다 우선순위가 갈려 CSP가 무력해질 수 있다.
+
+### 개인정보 처리방침은 실제와 맞춘다
+
+`processors()`가 `GA_ID`가 있을 때만 **Google LLC(미국)**를 위탁 업체 목록에 넣는다.
+안 쓰는 업체를 적으면 방침이 부정확하고, 쓰는데 안 적으면 법령 위반이다.
+
 ## 색인 정책
 
 `indexable(tally, commentCount)` = **표 20개 이상 그리고 댓글 1개 이상.**

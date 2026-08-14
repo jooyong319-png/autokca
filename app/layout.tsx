@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { WebSiteJsonLd } from '@/components/JsonLd';
 import { TotalVotes } from '@/components/TotalVotes';
-import { SITE } from '@/lib/site';
+import { SITE, VERIFICATION } from '@/lib/site';
 import { HeaderNav } from '@/components/HeaderNav';
+import { Analytics } from '@/components/Analytics';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -21,20 +22,11 @@ export const metadata: Metadata = {
     description: SITE.description,
     url: SITE.url,
   },
-  /* 검색엔진 소유 확인 — **코드를 고치지 않고 환경변수만 추가**하면 된다.
-   *
-   *  Vercel에 GOOGLE_SITE_VERIFICATION / NAVER_SITE_VERIFICATION을 넣고 재배포하면
-   *  meta 태그가 생긴다. HTML에 그대로 노출되는 값이라 비밀이 아니고,
-   *  서버에서 메타데이터를 만들 때 읽으므로 NEXT_PUBLIC_ 접두사가 필요 없다.
-   *
-   *  ⚠️ 한국 서비스라 **네이버 비중이 크다**. 구글만 하고 끝내지 말 것. */
+  /* 검색엔진 소유 확인 — 값은 `lib/site.ts`의 `VERIFICATION`에 있다.
+   *  비밀이 아니라 코드에 기본값을 두고, 환경변수가 있으면 그쪽이 이긴다(거기 주석 참고). */
   verification: {
-    ...(process.env.GOOGLE_SITE_VERIFICATION
-      ? { google: process.env.GOOGLE_SITE_VERIFICATION }
-      : {}),
-    ...(process.env.NAVER_SITE_VERIFICATION
-      ? { other: { 'naver-site-verification': process.env.NAVER_SITE_VERIFICATION } }
-      : {}),
+    google: VERIFICATION.google,
+    other: { 'naver-site-verification': VERIFICATION.naver },
   },
 
   /* 기본 팔레트는 라이트다. 다크는 CSS가 OS 설정을 따라간다. */
@@ -50,6 +42,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
+      {/* 🔴 분석 태그는 **`<head>`에 생 `<script>`로** 들어간다(`components/Analytics.tsx`).
+          `next/script`를 쓰면 HTML에 실제 태그가 안 들어가 구글이 감지하지 못한다.
+          App Router에서는 `<head>`를 직접 열어 넣을 수 있다. */}
+      <head>
+        <Analytics />
+      </head>
       <body>
         <WebSiteJsonLd />
         {/* 🔴 7차 §5-3 — `sticky`에서 `fixed`로 바꿨다.
