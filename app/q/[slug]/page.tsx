@@ -12,7 +12,8 @@ import {
   readAllTopComments,
   topComment,
 } from '@/lib/comments';
-import { QUESTIONS, docNumber, feedOrder, questionBySlug, topicBySlug } from '@/lib/questions';
+import { docNumber, feedOrder, topicBySlug } from '@/lib/questions';
+import { catalog, findBySlug } from '@/lib/catalog';
 import { pageDescription, pageTitle } from '@/lib/seo';
 import { SITE } from '@/lib/site';
 import { indexable } from '@/lib/tiers';
@@ -30,8 +31,10 @@ function decode(raw: string): string {
   }
 }
 
-export function generateStaticParams() {
-  return QUESTIONS.map(q => ({ slug: q.slug }));
+/* 🔴 병합 목록으로 만든다 — 관리 화면에서 발행한 안건도 프리렌더 대상이다.
+   빌드 이후에 발행된 것은 여기 없지만 `dynamicParams: true`가 온디맨드로 렌더한다. */
+export async function generateStaticParams() {
+  return (await catalog()).map(q => ({ slug: q.slug }));
 }
 
 export const dynamicParams = true;
@@ -41,7 +44,7 @@ interface Params {
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
-  const question = questionBySlug(decode(params.slug));
+  const question = await findBySlug(decode(params.slug));
   if (!question) return {};
 
   const [tally, comments] = await Promise.all([
@@ -74,7 +77,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 export default async function QuestionPage({ params }: Params) {
   const slug = decode(params.slug);
-  const question = questionBySlug(slug);
+  const all = await catalog();
+  const question = all.find(q => q.slug === slug);
   if (!question) notFound();
 
   const [tally, comments, topA, topB, counts] = await Promise.all([
@@ -91,7 +95,7 @@ export default async function QuestionPage({ params }: Params) {
     readAllCommentCounts(),
     readAllTopComments(),
   ]);
-  const order = feedOrder(question.id, id => {
+  const order = feedOrder(all, question.id, id => {
     const t = tallies.get(id);
     return t ? t.a + t.b : 0;
   });

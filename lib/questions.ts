@@ -326,13 +326,17 @@ export function byKind(kind: Kind): Question[] {
  *  🔴 투표한 것을 **숨기지 않는다.** 3표일 때 던졌는데 지금 200표가 됐으면 보러 오고,
  *  그게 핵심 재방문 이유다. 순서만 뒤로 보낸다.
  */
+/** @param all 대상 목록. **코드 103개가 아니라 `catalog()`의 병합 결과를 넘긴다** —
+ *  관리 화면에서 발행한 안건도 피드에 나와야 한다.
+ *  모듈 상수를 직접 읽지 않는 이유가 이것이다. */
 export function feedOrder(
+  all: readonly Question[],
   excludeId?: string,
   votesOf?: (id: string) => number,
   voted?: (id: string) => boolean,
 ): Question[] {
   const pick = (kind: Kind) => {
-    const list = byKind(kind).filter(q => q.id !== excludeId);
+    const list = all.filter(q => q.kind === kind && q.id !== excludeId);
     if (!votesOf && !voted) return list;
     /* 같은 순위면 원래 배열 순서를 지킨다 — 매 요청마다 순서가 흔들리면
        무한 스크롤에서 같은 질문이 두 번 나올 수 있다. */

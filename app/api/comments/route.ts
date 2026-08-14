@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
 import { commentCookieName, readCookie, readVote } from '@/lib/cookies';
-import { QUESTIONS } from '@/lib/questions';
+import { validIds } from '@/lib/catalog';
 import { addComment, commentCounts, listComments, topComment, validate } from '@/lib/comments';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const VALID = new Set(QUESTIONS.map(q => q.id));
+/* 🔴 모듈 상수가 아니라 **요청마다** 만든다 — 관리 화면에서 발행한 안건도
+   유효해야 한다. 상수로 두면 새 안건에 투표·댓글이 404로 막힌다.
+   `catalog()`는 60초 fetch 캐시라 왕복이 매번 생기지는 않는다. */
 
 /** 의견 목록 — 화면이 몇 초마다 다시 부른다(폴링).
  *
@@ -16,7 +18,7 @@ const VALID = new Set(QUESTIONS.map(q => q.id));
  *  진짜 실시간 채팅방을 만들 때 그때 Realtime을 도입한다. */
 export async function GET(request: Request) {
   const id = new URL(request.url).searchParams.get('id');
-  if (!id || !VALID.has(id)) {
+  if (!id || !(await validIds()).has(id)) {
     return NextResponse.json({ error: '없는 질문입니다.' }, { status: 404 });
   }
   /* tops·counts를 함께 준다 — 진영 머리글과 "반대편 1위"가 폴링으로도 갱신돼야 한다.
@@ -40,7 +42,7 @@ export async function POST(request: Request) {
 
   const { id, body } = (payload ?? {}) as { id?: unknown; body?: unknown };
 
-  if (typeof id !== 'string' || !VALID.has(id)) {
+  if (typeof id !== 'string' || !(await validIds()).has(id)) {
     return NextResponse.json({ error: '없는 질문입니다.' }, { status: 404 });
   }
 

@@ -1,4 +1,5 @@
 import { docNumber, feedOrder } from '@/lib/questions';
+import { QUESTIONS } from '@/lib/questions';
 import styles from './not-found.module.css';
 
 /* 🔴 커스텀 404가 필요한 이유 두 개.
@@ -36,7 +37,10 @@ const OFFER = 8;
 export default function NotFound() {
   /* `votesOf`를 넘기지 않는다 — 집계를 읽지 않으므로 배열 순서를 그대로 쓴다.
      진지 1 : 병맛 2 교차는 그대로 유지된다. */
-  const offers = feedOrder().slice(0, OFFER);
+  /* 🔴 여기서는 **코드의 103개만** 쓴다(`catalog()`를 부르지 않는다).
+     404는 데이터 의존이 0이어야 어떤 경로에서도 렌더된다 — 이 파일 상단 주석 참고.
+     DB를 부르면 `notFound()` 경로에서 실패할 때 404가 빈 화면이 된다. */
+  const offers = feedOrder(QUESTIONS).slice(0, OFFER);
 
   return (
     <>

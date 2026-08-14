@@ -1,6 +1,7 @@
 import { LatinFallbackCard, QuestionCard } from '@/lib/ogCard';
 import { OG_CACHE, OG_SIZE, koreanFont } from '@/lib/ogFont';
-import { docNumber, questionBySlug } from '@/lib/questions';
+import { docNumber } from '@/lib/questions';
+import { findBySlug } from '@/lib/catalog';
 import { readTally } from '@/lib/votes';
 
 export const runtime = 'nodejs';
@@ -23,7 +24,7 @@ export default async function Image({ params }: { params: { slug: string } }) {
     /* 잘못된 인코딩이면 원문 그대로 조회한다 */
   }
 
-  const question = questionBySlug(slug);
+  const question = await findBySlug(slug);
   if (!question) {
     return new ImageResponse(<LatinFallbackCard />, { ...size, headers: OG_CACHE });
   }

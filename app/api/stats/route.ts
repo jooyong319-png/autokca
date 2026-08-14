@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { QUESTIONS } from '@/lib/questions';
+import { catalog } from '@/lib/catalog';
 import { readAllTallies } from '@/lib/votes';
 
 export const runtime = 'nodejs';
@@ -18,7 +18,7 @@ export async function GET() {
 
   return NextResponse.json({
     votes,
-    questions: QUESTIONS.length,
+    questions: (await catalog()).length,
     live: tallies.size > 0 || votes > 0,
   });
 }

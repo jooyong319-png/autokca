@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { readVotedIds } from '@/lib/cookies';
+import { catalog } from '@/lib/catalog';
 import { docNumber, feedOrder } from '@/lib/questions';
 import { readAllCommentCounts, readAllTopComments } from '@/lib/comments';
 import { readAllTallies, readTally } from '@/lib/votes';
@@ -21,16 +22,18 @@ export async function GET(request: Request) {
   const offset = Math.min(Math.max(Number(params.get('offset') ?? 0) || 0, 0), MAX_OFFSET);
 
   /* 서버 렌더와 같은 순서여야 한다 — 순서가 어긋나면 같은 질문이 두 번 나온다 */
-  const [tallies, commentCounts, tops] = await Promise.all([
+  const [tallies, commentCounts, tops, all] = await Promise.all([
     readAllTallies(),
     readAllCommentCounts(),
     readAllTopComments(),
+    catalog(),
   ]);
   /* 🔴 이 라우트는 이미 `force-dynamic`이라 **쿠키를 읽어도 잃을 캐시가 없다.**
      홈(`/`)은 ISR이라 쿠키를 못 읽는다 — 그래서 홈은 안건 1장만 서버에서 심고
      나머지는 여기서 개인화해 내려준다(7차 §4-3의 ISR 충돌을 이렇게 우회했다). */
   const votedIds = readVotedIds(request);
   const order = feedOrder(
+    all,
     exclude,
     id => {
       const t = tallies.get(id);

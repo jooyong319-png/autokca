@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { QUESTIONS, byKind } from '@/lib/questions';
+import { catalog } from '@/lib/catalog';
 import { SITE } from '@/lib/site';
 import styles from '../legal.module.css';
 
@@ -12,14 +12,15 @@ export const metadata: Metadata = {
   alternates: { canonical: `${SITE.url}/about` },
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const all = await catalog();
   return (
     <article className={styles.doc}>
       <header className={styles.head}>
         <h1 className={styles.title}>오또케는 무엇인가</h1>
         <span className={styles.effective}>
-          질문 {QUESTIONS.length}개 · 논쟁 {byKind('serious').length}개 ·
-          {' '}그냥 궁금한 것 {byKind('meme').length}개
+          질문 {all.length}개 · 논쟁 {all.filter(q => q.kind === 'serious').length}개 ·
+          {' '}그냥 궁금한 것 {all.filter(q => q.kind === 'meme').length}개
         </span>
       </header>
 

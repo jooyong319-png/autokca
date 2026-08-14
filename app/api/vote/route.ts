@@ -8,13 +8,15 @@ import {
   revisionCookieName,
   voteCookieName,
 } from '@/lib/cookies';
-import { QUESTIONS } from '@/lib/questions';
+import { validIds } from '@/lib/catalog';
 import { castVote, changeVote, readTally } from '@/lib/votes';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const VALID = new Set(QUESTIONS.map(q => q.id));
+/* 🔴 모듈 상수가 아니라 **요청마다** 만든다 — 관리 화면에서 발행한 안건도
+   유효해야 한다. 상수로 두면 새 안건에 투표·댓글이 404로 막힌다.
+   `catalog()`는 60초 fetch 캐시라 왕복이 매번 생기지는 않는다. */
 
 /* 신규 기표와 번복이 같은 옵션을 써야 한다 — 따로 적으면 번복할 때
    만료나 path가 어긋나서 쿠키가 갈라진다. */
@@ -48,7 +50,7 @@ const VOTE_COOKIE = {
  *  localStorage만 믿으면 쿠키와 어긋났을 때 사용자가 기표도 의견도 못 하는 상태에 갇힌다. */
 export async function GET(request: Request) {
   const id = new URL(request.url).searchParams.get('id');
-  if (!id || !VALID.has(id)) {
+  if (!id || !(await validIds()).has(id)) {
     return NextResponse.json({ error: '없는 질문입니다.' }, { status: 404 });
   }
 
@@ -71,7 +73,7 @@ export async function POST(request: Request) {
 
   const { id, choice } = (body ?? {}) as { id?: unknown; choice?: unknown };
 
-  if (typeof id !== 'string' || !VALID.has(id)) {
+  if (typeof id !== 'string' || !(await validIds()).has(id)) {
     return NextResponse.json({ error: '없는 질문입니다.' }, { status: 404 });
   }
   if (choice !== 'a' && choice !== 'b') {

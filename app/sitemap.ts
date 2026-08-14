@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { readAllCommentCounts } from '@/lib/comments';
-import { QUESTIONS, TOPICS } from '@/lib/questions';
+import { TOPICS } from '@/lib/questions';
+import { catalog } from '@/lib/catalog';
 import { SITE } from '@/lib/site';
 import { indexable } from '@/lib/tiers';
 import { readAllTallies } from '@/lib/votes';
@@ -23,7 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     readAllCommentCounts(),
   ]);
 
-  const published = QUESTIONS.filter(q =>
+  const published = (await catalog()).filter(q =>
     indexable(tallies.get(q.id) ?? EMPTY, commentCounts.get(q.id) ?? 0),
   );
 

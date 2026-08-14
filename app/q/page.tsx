@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { BreadcrumbJsonLd } from '@/components/JsonLd';
-import { QUESTIONS, TOPICS, byKind } from '@/lib/questions';
+import { TOPICS } from '@/lib/questions';
+import { catalog } from '@/lib/catalog';
 import { SITE } from '@/lib/site';
 import styles from './archive.module.css';
 
@@ -12,7 +13,8 @@ export const metadata: Metadata = {
   alternates: { canonical: `${SITE.url}/q` },
 };
 
-export default function QuestionIndex() {
+export default async function QuestionIndex() {
+  const all = await catalog();
   return (
     <>
       <BreadcrumbJsonLd
@@ -26,8 +28,8 @@ export default function QuestionIndex() {
         <h1 className={styles.title}>질문 전체</h1>
         <p className={styles.sub}>아무거나 눌러도 됩니다. 순서는 없습니다.</p>
         <p className={styles.count}>
-          질문 {QUESTIONS.length}개 · 논쟁 {byKind('serious').length}개 ·
-          {' '}그냥 궁금한 것 {byKind('meme').length}개
+          질문 {all.length}개 · 논쟁 {all.filter(q => q.kind === 'serious').length}개 ·
+          {' '}그냥 궁금한 것 {all.filter(q => q.kind === 'meme').length}개
         </p>
       </section>
 
@@ -39,7 +41,7 @@ export default function QuestionIndex() {
       </nav>
 
       <ol className={styles.list}>
-        {QUESTIONS.map(q => (
+        {all.map(q => (
           <li key={q.id} className={styles.item}>
             <span className={styles.itemDate}>
               {q.kind === 'serious' ? '논쟁' : '별건'}

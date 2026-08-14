@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Feed, type FeedItem } from '@/components/Feed';
 import { docNumber, feedOrder, questionOfDay, seoulDayKey } from '@/lib/questions';
+import { catalog } from '@/lib/catalog';
 import { SITE } from '@/lib/site';
 import { readAllCommentCounts, readAllTopComments } from '@/lib/comments';
 import { readAllTallies, readTally } from '@/lib/votes';
@@ -44,16 +45,18 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   /* 표를 한 번에 받아 피드 앞자리를 채워진 질문으로 세운다(§5-2).
      질문마다 readTally를 부르면 100번 왕복한다. */
-  const [tallies, commentCounts, tops] = await Promise.all([
+  const [tallies, commentCounts, tops, all] = await Promise.all([
     readAllTallies(),
     readAllCommentCounts(),
     readAllTopComments(),
+    /* 코드 103개 + 관리 화면에서 발행한 안건 */
+    catalog(),
   ]);
   const votesOf = (id: string) => {
     const t = tallies.get(id);
     return t ? t.a + t.b : 0;
   };
-  const order = feedOrder(undefined, votesOf);
+  const order = feedOrder(all, undefined, votesOf);
 
   /* 🔴 홈 첫 카드는 **상위권 안에서 매일 회전**한다(`questionOfDay`).
    *

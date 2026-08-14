@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Certificate } from './Certificate';
-import { QUESTIONS, TOPICS, docNumber } from '@/lib/questions';
+import { TOPICS, docNumber } from '@/lib/questions';
+import { catalog } from '@/lib/catalog';
 import { SITE } from '@/lib/site';
 import { readAllTallies } from '@/lib/votes';
 
@@ -25,7 +26,7 @@ export default async function MePage() {
 
   return (
     <Certificate
-      questions={QUESTIONS.map(q => ({
+      questions={(await catalog()).map(q => ({
         id: q.id,
         topic: q.topic,
         slug: q.slug,

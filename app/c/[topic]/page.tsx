@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { BreadcrumbJsonLd } from '@/components/JsonLd';
-import { TOPICS, byTopic, topicBySlug } from '@/lib/questions';
+import { TOPICS, topicBySlug } from '@/lib/questions';
+import { byTopicAsync } from '@/lib/catalog';
 import { SITE } from '@/lib/site';
 import styles from '../../q/archive.module.css';
 
@@ -26,11 +27,11 @@ export function generateMetadata({ params }: Params): Metadata {
 }
 
 /* 집계 페이지로 롱테일을 잡는다(브리프 §6) — "돈 관련 투표 모음" 같은 검색어. */
-export default function TopicPage({ params }: Params) {
+export default async function TopicPage({ params }: Params) {
   const topic = topicBySlug(params.topic);
   if (!topic) notFound();
 
-  const items = byTopic(topic.slug);
+  const items = await byTopicAsync(topic.slug);
 
   return (
     <>

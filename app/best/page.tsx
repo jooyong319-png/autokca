@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { BreadcrumbJsonLd } from '@/components/JsonLd';
-import { QUESTIONS } from '@/lib/questions';
+import { catalog } from '@/lib/catalog';
 import { SITE } from '@/lib/site';
 import { readAllTallies } from '@/lib/votes';
 import styles from '../q/archive.module.css';
@@ -22,7 +22,7 @@ const MIN_VOTES = 10;
 export default async function BestPage() {
   const tallies = await readAllTallies();
 
-  const scored = QUESTIONS.map(q => {
+  const scored = (await catalog()).map(q => {
     const t = tallies.get(q.id);
     const total = t ? t.a + t.b : 0;
     const pctA = total > 0 ? (t!.a / total) * 100 : 50;
