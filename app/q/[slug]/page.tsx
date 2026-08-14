@@ -127,7 +127,18 @@ export default async function QuestionPage({ params }: Params) {
 
       {/* `tops`는 이미 받아 온 topA·topB를 재사용한다 — 배치 RPC를 또 부르지 않는다.
           아래 Comments도 같은 값을 쓰므로 카드와 댓글 섹션의 1위가 어긋나지 않는다. */}
+      {/* 🔴 `key`로 **안건이 바뀌면 상태를 통째로 버린다.**
+       *
+       *  `/q/A` → `/q/B`는 **같은 라우트 세그먼트**라 React가 컴포넌트를 재사용한다.
+       *  그런데 이 세 컴포넌트는 props로 초기 상태를 잡는다(`useState(initial)`) —
+       *  초기값은 마운트 때만 쓰이므로 **A의 집계·댓글·피드가 그대로 남는다.**
+       *  특히 `Comments`의 폴링은 기존 목록에 **병합**하므로 A의 댓글이 B 페이지에 섞인다.
+       *
+       *  effect 의존성에 `question.id`를 넣는 것으로는 부족하다 — 서버 응답이 오기 전까지
+       *  낡은 값이 보이고, 집계가 죽어 있으면 영영 안 고쳐진다.
+       *  `key`가 바뀌면 React가 새 인스턴스를 만들어 그런 창이 아예 없다. */}
       <Ballot
+        key={question.id}
         question={question}
         docNo={docNumber(question)}
         tally={tally}
@@ -142,6 +153,7 @@ export default async function QuestionPage({ params }: Params) {
 
       {/* 댓글이 곧 본문이다(브리프 §6) — 전용 페이지에만 붙인다 */}
       <Comments
+        key={question.id}
         question={question}
         initial={comments}
         tops={{ a: topA, b: topB }}
@@ -158,7 +170,7 @@ export default async function QuestionPage({ params }: Params) {
       </p>
 
       {/* 여기서도 다음 질문으로 이어진다 — 원칙 2 */}
-      <Feed initial={seed} excludeId={question.id} startOffset={2} />
+      <Feed key={question.id} initial={seed} excludeId={question.id} startOffset={2} />
     </>
   );
 }

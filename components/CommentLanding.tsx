@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 /* 🔴 카드에서 사유를 올리고 상세로 넘어왔을 때의 착지 연출.
  *
@@ -40,6 +41,16 @@ export function markLanding(commentId: number): void {
 }
 
 export function CommentLanding() {
+  /* 🔴 **경로를 의존성에 넣어야 한다.**
+   *
+   *  상세 페이지의 이어지는 피드에서 댓글을 쓰면 `/q/A` → `/q/B`로 간다.
+   *  **같은 라우트 세그먼트**라 React가 이 컴포넌트를 재사용하고,
+   *  의존성이 `[]`이면 마운트 효과가 다시 돌지 않아 **착지 연출이 조용히 안 일어난다.**
+   *  (홈 → 상세는 라우트가 달라 재마운트되므로 그때는 동작했다 — 그래서 놓치기 쉬웠다.)
+   *
+   *  경로가 바뀔 때마다 세션 값을 확인하면 두 경우가 같이 해결된다. */
+  const path = usePathname();
+
   useEffect(() => {
     let target: string | null = null;
     try {
@@ -54,8 +65,25 @@ export function CommentLanding() {
     let timers: number[] = [];
     let waited = 0;
 
+    /* 🔴 내 댓글을 **화면 가운데**에 놓는다.
+     *
+     *  `scrollIntoView({ block: 'start' })`는 위쪽에 붙여서 너무 아래로 내려간 것처럼 보였다.
+     *  그렇다고 `block: 'center'`를 쓰면 `.item`의 `scroll-margin-top: 7rem`이 정렬 상자에
+     *  더해져 **절반인 56px만큼 아래로 밀린다**(그 여백은 직접 링크로 들어왔을 때
+     *  헤더를 피하려고 둔 것이라 지울 수도 없다).
+     *
+     *  → 실제 요소 위치로 직접 계산한다. scroll-margin의 영향을 받지 않아 예측 가능하다.
+     *
+     *  ⚠️ 뷰포트보다 긴 요소는 가운데 정렬하면 윗부분이 화면 밖으로 나간다.
+     *     그때는 위쪽 여유만 두고 붙인다. 댓글은 80자라 드물지만 막아 둔다. */
     const land = (el: HTMLElement) => {
-      el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+      const rect = el.getBoundingClientRect();
+      const room = window.innerHeight;
+      const gap = rect.height > room * 0.7 ? 96 : (room - rect.height) / 2;
+      window.scrollTo({
+        top: Math.max(0, window.scrollY + rect.top - gap),
+        behavior: reduced ? 'auto' : 'smooth',
+      });
       el.classList.add('landed');
       /* 강조를 걷어낸다. 남겨 두면 나중에 이 페이지를 다시 볼 때 왜 칠해져 있는지 알 수 없다. */
       timers.push(window.setTimeout(() => el.classList.remove('landed'), 2400));
@@ -78,7 +106,7 @@ export function CommentLanding() {
       timers.forEach(window.clearTimeout);
       timers = [];
     };
-  }, []);
+  }, [path]);
 
   return null;
 }
