@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Feed, type FeedItem } from '@/components/Feed';
-import { docNumber, feedOrder } from '@/lib/questions';
+import { docNumber, feedOrder, questionOfDay, seoulDayKey } from '@/lib/questions';
 import { SITE } from '@/lib/site';
 import { readAllCommentCounts, readAllTopComments } from '@/lib/comments';
 import { readAllTallies, readTally } from '@/lib/votes';
@@ -54,8 +54,25 @@ export default async function HomePage() {
     return t ? t.a + t.b : 0;
   };
   const order = feedOrder(undefined, votesOf);
+
+  /* 🔴 홈 첫 카드는 **상위권 안에서 매일 회전**한다(`questionOfDay`).
+   *
+   *  전에는 표 1위가 그대로 첫 카드였는데, 첫 카드가 노출을 가장 많이 받아 표를 가장
+   *  많이 얻고 그래서 계속 첫 카드가 되는 잠금이 생겼다. 신규 방문자는 영원히 같은
+   *  첫인상을 받는다.
+   *
+   *  0표짜리는 후보에서 뺀다 — 첫 화면이 "아직 아무도 안 눌렀습니다"면 죽은 사이트로 보인다.
+   *  후보가 2개 미만이면 회전하지 않고 기존 순서를 그대로 쓴다(돌릴 만큼 쌓이지 않았다).
+   *
+   *  🔴 **날짜로 정한다**(`Math.random()`이 아니다). 무작위면 새로고침마다 바뀌어
+   *  ISR 캐시가 무의미해지고 "오늘의 안건"으로 인식되지도 않는다.
+   *  하루 종일 같은 값이라 `revalidate = 60` 캐시가 그대로 유효하다. */
+  const rankedSerious = order.filter(q => q.kind === 'serious' && votesOf(q.id) > 0);
+  const featured = questionOfDay(rankedSerious, seoulDayKey());
+  const lead = featured ? [featured, ...order.filter(q => q.id !== featured.id)] : order;
+
   const seed: FeedItem[] = await Promise.all(
-    order.slice(0, SEED).map(async question => ({
+    lead.slice(0, SEED).map(async question => ({
       question,
       docNo: docNumber(question),
       tally: await readTally(question.id),

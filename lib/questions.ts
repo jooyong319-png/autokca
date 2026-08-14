@@ -368,6 +368,60 @@ export function questionCount(): number {
 
 /** 관공서 문서번호 — 투표용지의 정색 장치.
  *  날짜가 아니라 질문에 매인 번호라야 아카이브에서도 같은 값이 나온다. */
+/** 오늘 날짜(KST) — `YYYY-MM-DD`.
+ *
+ *  🔴 UTC를 그대로 쓰면 **오전 9시에 안건이 바뀐다.** 한국 사용자에게는 자정에 바뀌어야
+ *  "오늘의 안건"이 말이 된다. 서버가 어느 시간대에 있든(Vercel은 UTC) 같은 값이 나오게
+ *  UTC+9로 옮겨서 날짜만 뗀다. */
+export function seoulDayKey(now: Date = new Date()): string {
+  return new Date(now.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+/** `YYYY-MM-DD` → 에포크 기준 날짜 번호.
+ *
+ *  🔴 해시가 아니라 **순번**을 쓴다. 해시로 인덱싱하면 충돌 때문에 이틀 연속 같은 안건이
+ *  나올 수 있다(실측: 21일 중 8/19·8/20이 같았다). 그러면 "매일 바뀐다"가 깨진다.
+ *  순번을 나머지 연산하면 후보를 **한 바퀴 돌 때까지 겹치지 않고** 고르게 노출된다. */
+function dayNumber(dayKey: string): number {
+  return Math.floor(Date.parse(`${dayKey}T00:00:00Z`) / 86400000);
+}
+
+/** 홈 첫 카드로 올릴 "오늘의 안건" 후보 수. */
+const ROTATE_POOL = 8;
+
+/** 🔴 홈 첫 카드를 **상위권 안에서 매일 회전**시킨다.
+ *
+ *  왜 필요한가: 전에는 표가 가장 많은 진지 질문이 그대로 첫 카드였다. 그런데 첫 카드가
+ *  노출을 가장 많이 받으니 표를 가장 많이 얻고, 그래서 계속 첫 카드다 —
+ *  **1등이 1등이라서 계속 1등**이 되는 잠금이 생긴다.
+ *  재방문자는 미투표 우선 정렬이 풀어 주지만 **신규 방문자는 영원히 같은 첫인상**을 받고,
+ *  브리프 §3이 원한 시의성("매일 방문할 이유")을 만들 장치가 없었다.
+ *
+ *  왜 무작위가 아닌가: `Math.random()`이면 새로고침마다 바뀌어 ISR 캐시가 무의미해지고
+ *  사용자도 "오늘의 안건"으로 인식하지 못한다. 날짜로 정하면 하루 종일 같은 값이라
+ *  캐시가 그대로 유효하다.
+ *
+ *  왜 전체가 아니라 상위권인가: 완전 회전이면 0표짜리가 첫 화면에 올 수 있고,
+ *  그건 "죽은 사이트" 인상을 준다. 검증된 것 안에서만 돌린다.
+ *
+ *  ⚠️ 후보를 **id 순으로 정렬한 뒤** 인덱싱한다. 표 순서로 인덱싱하면 하루 중에 표가
+ *     움직일 때마다 "오늘의 안건"이 바뀐다 — 오후에 첫 카드가 갈리면 버그로 읽힌다.
+ *
+ *  ⚠️ 순서만 정한다. **집계는 건드리지 않는다**(제1원칙).
+ *
+ *  @param ranked 표 많은 순으로 정렬된 진지 질문
+ *  @returns 오늘의 안건. 후보가 2개 미만이면 `null`(회전할 만큼 쌓이지 않았다)
+ */
+export function questionOfDay(ranked: Question[], dayKey: string): Question | null {
+  /* 0표짜리는 후보에서 뺀다 — 첫 화면이 "아직 아무도 안 눌렀습니다"면 안 된다.
+     표 정보를 모르는 호출(정렬 없이 넘긴 경우)에서는 그대로 상위 N개를 쓴다. */
+  const pool = ranked.slice(0, ROTATE_POOL);
+  if (pool.length < 2) return null;
+
+  const stable = [...pool].sort((x, y) => (x.id < y.id ? -1 : x.id > y.id ? 1 : 0));
+  return stable[dayNumber(dayKey) % stable.length];
+}
+
 export function docNumber(question: Question): string {
   let hash = 0;
   for (const ch of question.id) hash = (hash * 31 + ch.codePointAt(0)!) % 10000;
