@@ -47,16 +47,22 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const question = await findBySlug(decode(params.slug));
   if (!question) return {};
 
-  const [tally, comments] = await Promise.all([
+  const [tally, counts] = await Promise.all([
     readTally(question.id),
-    listComments(question.id, 1),
+    commentCounts(question.id),
   ]);
 
-  /* 🔴 thin content 방어(브리프 §6 · 개선문서 §4-2).
-     기준은 **표 20개 이상 그리고 댓글 1개 이상**이다. 표만 있고 댓글이 없으면
-     본문이 수치 두 줄뿐이라 여전히 빈 페이지다 — 본문을 채우는 건 댓글이다.
-     쌓이면 자동으로 색인이 열린다. */
-  const thin = !indexable(tally, comments.length);
+  /* 🔴 thin content 방어(브리프 §6 · 개선문서 §4-2). 기준은 `lib/tiers.ts` 한 곳에 있다.
+     표만 있고 댓글이 없으면 본문이 수치 두 줄뿐이라 여전히 빈 페이지다 —
+     본문을 채우는 건 댓글이다. 쌓이면 자동으로 색인이 열린다.
+
+     🔴 **개수를 세는 것과 있는지 보는 것은 다르다.** 여기는 `listComments(id, 1)`의
+     길이를 썼다. 댓글 1개 이상이 기준일 때는 우연히 맞았지만, 기준이 2개로 오르자
+     길이가 최대 1이라 **어떤 페이지도 통과할 수 없게** 됐다.
+     사이트맵은 `readAllCommentCounts()`로 진짜 개수를 세므로 둘이 어긋났다 —
+     사이트맵은 "크롤하라"는데 페이지는 `noindex`를 다는 상태였다.
+     같은 판정에는 같은 입력을 쓴다. */
+  const thin = !indexable(tally, counts.a + counts.b);
 
   const canonical = `${SITE.url}/q/${encodeURIComponent(question.slug)}`;
   return {
