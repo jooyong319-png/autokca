@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { BreadcrumbJsonLd } from '@/components/JsonLd';
 import { catalog } from '@/lib/catalog';
 import { SITE } from '@/lib/site';
+import { TIER } from '@/lib/tiers';
 import { readAllTallies } from '@/lib/votes';
 import styles from '../q/archive.module.css';
 
@@ -15,7 +16,13 @@ export const metadata: Metadata = {
 };
 
 const TOP = 10;
-const MIN_VOTES = 10;
+/* 🔴 임계치를 **따로 들고 있지 않는다.** 10을 박아 뒀더니 최다 득표가 10표인 시점에
+   "TOP 10" 세 목록에 질문이 **1개**만 나왔다 — 색인 가능한 몇 안 되는 허브가
+   거의 빈 페이지였다.
+   사이트는 이미 "5표부터 비율을 보여준다"(`TIER.RESULT`)고 정해 놓았다.
+   그 선 아래는 화면에 비율 자체가 없으니 순위를 매길 근거도 없고,
+   그 위인데 순위에서 빼면 **같은 사이트가 두 개의 기준을 갖는다.** */
+const MIN_VOTES = TIER.RESULT;
 
 /* 집계 페이지로 롱테일을 잡는다(브리프 §6).
    "가장 의견이 갈린 질문" 같은 검색어는 개별 질문과 다른 쿼리다. */
