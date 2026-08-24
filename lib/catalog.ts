@@ -31,7 +31,12 @@ export async function catalog(): Promise<Question[]> {
     if (ids.has(d.id) || slugs.has(d.slug)) continue;
     ids.add(d.id);
     slugs.add(d.slug);
-    add.push({ id: d.id, slug: d.slug, topic: d.topic, kind: d.kind, q: d.q, a: d.a, b: d.b });
+    add.push({
+      id: d.id, slug: d.slug, topic: d.topic, kind: d.kind, q: d.q, a: d.a, b: d.b,
+      /* 발행분은 **자기 등록일**을 갖는다. 코드 103개와 같은 날로 뭉뚱그리면
+         나중에 발행한 안건이 사이트 개설일에 올라온 것처럼 표시된다. */
+      published: d.createdAt || undefined,
+    });
   }
   return [...QUESTIONS, ...add];
 }

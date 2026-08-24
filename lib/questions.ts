@@ -43,7 +43,18 @@ export interface Question {
   a: string;
   /** 아니오 쪽 표시 문구 */
   b: string;
+  /** 처음 게시된 날(ISO). **관리 화면에서 발행한 안건만 값이 있다** —
+   *  코드에 박힌 103개는 전부 같은 날이라 `QUESTIONS_PUBLISHED`를 쓴다. */
+  published?: string;
 }
+
+/* 🔴 구조화 데이터의 `datePublished`는 **필수**다(구글 DiscussionForumPosting).
+ *  빠져 있어서 GSC가 "유효하지 않음 — 리치 결과에 표시되지 않습니다"를 냈다.
+ *
+ *  코드의 103개는 `wiki/questions-log.md` 기준 2026-08-12에 한 번에 작성됐고
+ *  첫 커밋도 같은 날이다. **날짜를 지어내지 않고 실제 그날을 쓴다** —
+ *  최신으로 보이려고 오늘 날짜를 넣는 것은 구글에도 사용자에게도 거짓이다. */
+export const QUESTIONS_PUBLISHED = '2026-08-12';
 
 export interface Topic {
   slug: TopicSlug;

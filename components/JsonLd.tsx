@@ -1,5 +1,5 @@
 import type { Comment } from '@/lib/comments';
-import type { Question } from '@/lib/questions';
+import { QUESTIONS_PUBLISHED, type Question } from '@/lib/questions';
 import { outcome } from '@/lib/seo';
 import { SITE } from '@/lib/site';
 import type { Tally } from '@/lib/votes';
@@ -74,6 +74,12 @@ export function DiscussionJsonLd({
 }) {
   const o = outcome(question, tally);
   const url = `${SITE.url}/q/${encodeURIComponent(question.slug)}`;
+  /* 가장 최근 댓글 시각. 정렬 순서를 가정하지 않고 최댓값을 고른다 —
+     `listComments`의 정렬이 바뀌어도 여기가 조용히 틀리지 않는다. */
+  const newest = comments.reduce<string>(
+    (max, c) => (c.createdAt && c.createdAt > max ? c.createdAt : max),
+    '',
+  );
 
   return (
     <Script
@@ -88,6 +94,14 @@ export function DiscussionJsonLd({
           ? `응답자 ${o.total}명 중 ${o.percent}%가 "${o.label}"를 골랐습니다.`
           : question.q,
         author: { '@type': 'Organization', name: SITE.name, url: SITE.url },
+        /* 🔴 **필수 항목이다.** 빠져 있어서 GSC가 "유효하지 않음 — 리치 결과에
+           표시되지 않습니다"를 냈다(2026-08-24 감지). 코드에 박힌 안건은 전부
+           같은 날 작성됐고, 관리 화면에서 발행한 안건은 자기 등록일을 갖는다. */
+        datePublished: question.published || QUESTIONS_PUBLISHED,
+        /* 이 페이지의 내용이 마지막으로 **실제로 바뀐** 시점 = 마지막 댓글이 달린 때.
+           댓글이 없으면 게시일 그대로다. 크롤러에게 재방문 이유를 주는 값이라
+           빌드 시각 같은 걸 넣으면 안 된다 — 내용이 안 바뀌었는데 바뀌었다고 말하는 것이다. */
+        ...(newest ? { dateModified: newest } : {}),
         interactionStatistic: [
           {
             '@type': 'InteractionCounter',
@@ -100,11 +114,17 @@ export function DiscussionJsonLd({
             userInteractionCount: comments.length,
           },
         ],
-        /* 댓글은 익명이라 author를 지어내지 않는다 — 실제로 모르는 값이다 */
+        /* 🔴 `author`를 비워 뒀더니 GSC가 "더 많은 기능이 표시되거나 더 관련성 높은
+           쿼리에 최적화될 수 있습니다"로 경고했다(경로: comment).
+           전에는 "익명이라 지어내지 않는다"고 판단했는데, **익명이라고 적는 것은
+           지어내는 게 아니라 사실을 적는 것이다.** 이 사이트는 이름을 아예 받지 않으므로
+           "익명"이 정확한 값이다. 없는 이름을 만들어 넣는 것과는 다르다. */
         comment: comments.slice(0, 20).map(c => ({
           '@type': 'Comment',
           text: c.body,
-          ...(c.createdAt ? { dateCreated: c.createdAt } : {}),
+          author: { '@type': 'Person', name: '익명' },
+          /* 구글 포럼 문서가 쓰는 항목명은 `datePublished`다(schema.org는 둘 다 받는다) */
+          ...(c.createdAt ? { datePublished: c.createdAt } : {}),
           ...(c.likes > 0
             ? {
                 interactionStatistic: {
