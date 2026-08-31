@@ -120,9 +120,15 @@ export function DiscussionJsonLd({
         url,
         headline: question.q,
         inLanguage: 'ko-KR',
-        articleBody: o
-          ? `응답자 ${o.total}명 중 ${o.percent}%가 "${o.label}"를 골랐습니다.`
-          : question.q,
+        /* 🔴 배경 문단을 본문에 함께 넘긴다. 집계 한 줄만 보내면 구글이 받는 본문이
+           수치 한 문장뿐이라 thin으로 읽힌다 — 페이지에 실제로 있는 글을 그대로 준다.
+           없는 질문은 예전처럼 집계 문장만 간다(빈 문자열을 만들지 않는다). */
+        articleBody: [
+          o ? `응답자 ${o.total}명 중 ${o.percent}%가 "${o.label}"를 골랐습니다.` : question.q,
+          question.context,
+        ]
+          .filter(Boolean)
+          .join(' '),
         author: { '@type': 'Organization', name: SITE.name, url: SITE.url },
         /* 🔴 **필수 항목이다.** 빠져 있어서 GSC가 "유효하지 않음 — 리치 결과에
            표시되지 않습니다"를 냈다(2026-08-24 감지). 코드에 박힌 안건은 전부

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Ballot } from '@/components/Ballot';
 import { Comments } from '@/components/Comments';
+import { Context } from '@/components/Context';
 import { CommentLanding } from '@/components/CommentLanding';
 import { Feed, type FeedItem } from '@/components/Feed';
 import { BreadcrumbJsonLd, DiscussionJsonLd } from '@/components/JsonLd';
@@ -156,6 +157,15 @@ export default async function QuestionPage({ params }: Params) {
           b: topB && { id: topB.id, body: topB.body, likes: topB.likes },
         }}
       />
+
+      {/* 🔴 배경 문단. 투표용지 **아래**, 댓글 **위**.
+       *
+       *  위가 아닌 이유: 카드 안이나 질문 바로 밑에 넣으면 투표 버튼이 아래로 밀리고,
+       *  투표 후 카드는 이미 화면 예산이 빠듯하다. 읽고 나서 투표하면 프레이밍이
+       *  섞일 위험도 있다 — 먼저 누르고, 그다음 왜 갈리는지 읽고, 남의 말을 본다.
+       *
+       *  🔴 이게 이 페이지가 **참여 0명이어도 완성되게** 하는 부분이다. */}
+      <Context text={question.context} />
 
       {/* 댓글이 곧 본문이다(브리프 §6) — 전용 페이지에만 붙인다 */}
       <Comments

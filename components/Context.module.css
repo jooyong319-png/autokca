@@ -1,0 +1,34 @@
+/* 상세 페이지의 배경 문단. 투표용지 **아래**에 둔다.
+ *
+ * 🔴 카드 안에 넣지 않는다. 투표 후 카드는 이미 화면 예산이 빠듯하고(architecture.md
+ *    "레이아웃 예산은 가장 큰 상태에서 잡는다"), 3줄이 더 붙으면 그때 고친 게 되살아난다.
+ *    피드 카드에도 안 나온다 — 118장에 붙으면 스크롤 리듬이 무너진다.
+ *
+ * 🔴 종이가 아니라 **여백 위의 메모**로 보이게 한다. 용지(--paper)를 또 깔면
+ *    투표용지가 두 장인 것처럼 읽혀서 무엇이 본문인지 흐려진다. */
+.box {
+  max-width: var(--stage-w);
+  margin: 0 auto;
+  padding: 0 0.2rem;
+}
+.head {
+  margin: 0 0 0.5rem;
+  font-family: var(--f-doc);
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  color: var(--room-ink);
+  opacity: 0.7;
+}
+.body {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.85;
+  color: var(--room-ink);
+  /* 산문은 글줄이 짧아야 읽힌다 — 종이 폭(894px)을 다 쓰지 않는다 */
+  max-width: 46rem;
+  border-left: 3px solid var(--rule-strong);
+  padding-left: 0.9rem;
+}
+@media (max-width: 560px) {
+  .body { font-size: 0.92rem; line-height: 1.75; }
+}
