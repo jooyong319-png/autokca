@@ -13,9 +13,14 @@ import styles from './HeaderNav.module.css';
  *  `usePathname()`은 정적 프리렌더에서도 실제 경로를 준다(통합 위키 `nextjs.md`).
  */
 
+/* 🔴 7차 §5-2는 "3개만"이었다. 4개로 늘린 근거는 **목적지가 하나 더 생겼다**는 것이다 —
+   그 지시의 이유는 "6개를 넣으면 선택 피로"였지 3이라는 숫자 자체가 아니었다.
+   읽을거리는 사용자 참여에 걸려 있지 않은 유일한 콘텐츠라, 링크가 없으면
+   크롤러도 사람도 도달할 경로가 사이트맵밖에 없다. */
 const ITEMS = [
   { href: '/best', label: '집계' },
   { href: '/q', label: '안건' },
+  { href: '/blog', label: '읽을거리' },
   { href: '/me', label: '확인서' },
 ] as const;
 

@@ -1,4 +1,5 @@
 import type { Comment } from '@/lib/comments';
+import type { Post } from '@/lib/posts';
 import { QUESTIONS_PUBLISHED, type Question } from '@/lib/questions';
 import { outcome } from '@/lib/seo';
 import { SITE } from '@/lib/site';
@@ -57,6 +58,35 @@ export function BreadcrumbJsonLd({ trail }: { trail: Crumb[] }) {
           /* 홈 canonical은 슬래시가 없다. 붙이면 같은 페이지를 두 URL로 가리킨다. */
           item: c.path === '/' ? SITE.url : `${SITE.url}${c.path}`,
         })),
+      }}
+    />
+  );
+}
+
+/** 읽을거리 — `BlogPosting`.
+ *
+ *  🔴 질문 페이지의 `DiscussionForumPosting`과 **성격이 다르다.** 저건 사람들이 모여
+ *     떠든 스레드고, 이건 운영자가 쓴 글이다. 같은 타입으로 묶으면 둘 다 부정확해진다.
+ *
+ *  ⚠️ `datePublished`는 여기서도 필수다(질문 페이지에서 빠뜨려 GSC 오류를 냈다).
+ *     `Post.published`가 실제 작성일이라 지어낼 여지가 없다. */
+export function PostJsonLd({ post }: { post: Post }) {
+  const url = `${SITE.url}/blog/${encodeURIComponent(post.slug)}`;
+  return (
+    <Script
+      data={{
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        '@id': url,
+        url,
+        mainEntityOfPage: url,
+        headline: post.title,
+        description: post.summary,
+        inLanguage: 'ko-KR',
+        datePublished: post.published,
+        dateModified: post.updated || post.published,
+        author: { '@type': 'Organization', name: SITE.name, url: SITE.url },
+        publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url },
       }}
     />
   );

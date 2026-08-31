@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { readAllCommentCounts } from '@/lib/comments';
 import { TOPICS } from '@/lib/questions';
 import { catalog } from '@/lib/catalog';
+import { posts } from '@/lib/posts';
 import { SITE } from '@/lib/site';
 import { indexable } from '@/lib/tiers';
 import { readAllTallies } from '@/lib/votes';
@@ -32,6 +33,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: SITE.url, changeFrequency: 'daily', priority: 1 },
     { url: `${SITE.url}/q`, changeFrequency: 'daily', priority: 0.8 },
     { url: `${SITE.url}/best`, changeFrequency: 'daily' as const, priority: 0.7 },
+    /* 🔴 읽을거리는 **임계치가 없다.** 질문 페이지와 달리 사용자 참여에 걸려 있지 않고,
+       쓴 순간 완성된 글이라 조건부로 감출 이유가 없다. */
+    { url: `${SITE.url}/blog`, changeFrequency: 'weekly' as const, priority: 0.8 },
+    ...posts().map(p => ({
+      url: `${SITE.url}/blog/${encodeURIComponent(p.slug)}`,
+      lastModified: p.updated || p.published,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })),
     ...TOPICS.map(t => ({
       url: `${SITE.url}/c/${t.slug}`,
       changeFrequency: 'weekly' as const,
