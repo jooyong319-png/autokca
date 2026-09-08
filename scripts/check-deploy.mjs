@@ -174,11 +174,24 @@ console.log('\n헤더');
   const want = {
     'x-content-type-options': 'nosniff',
     'referrer-policy': 'strict-origin-when-cross-origin',
-    'x-frame-options': 'SAMEORIGIN',
   };
   for (const [k, v] of Object.entries(want)) {
     const got = r.headers?.get(k);
-    console.log(got === v ? ok(`${k}: ${got}`) : bad(`${k}: ${got ?? '없음'} (기대 ${v})`));
+    if (got === v) console.log(ok(`${k}: ${got}`));
+    else fail(`${k}: ${got ?? '없음'} (기대 ${v})`);
+  }
+
+  // 클릭재킹 방어는 `X-Frame-Options` 가 아니라 CSP `frame-ancestors` 로 한다.
+  // X-Frame-Options 에는 예외를 둘 수 없어(ALLOW-FROM 폐기) 구글 태그 어시스턴트가
+  // 사이트를 iframe 으로 못 열었다. 그래서 의도적으로 뺐다 — 여기서 그걸 기대하면
+  // 우리 결정을 우리 점검이 위반으로 신고한다.
+  const csp = r.headers?.get('content-security-policy');
+  if (csp?.includes('frame-ancestors')) console.log(ok(`frame-ancestors: ${csp}`));
+  else fail(`content-security-policy: ${csp ?? '없음'} (frame-ancestors 필요)`);
+
+  const xfo = r.headers?.get('x-frame-options');
+  if (xfo) {
+    fail(`x-frame-options: ${xfo} — CSP와 함께 두면 브라우저마다 우선순위가 갈린다. 제거할 것`);
   }
   const robotsTag = r.headers?.get('x-robots-tag');
   if (robotsTag) {
