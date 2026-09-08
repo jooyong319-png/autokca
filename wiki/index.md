@@ -10,9 +10,33 @@
 - **운영: https://autokca.com** (Vercel) · 저장소: github.com/jooyong319-png/autokca
 - **안건 = 코드 103개(진지 32 + 병맛 71) + 관리 화면 발행분.** `lib/catalog.ts`가 합친다.
   한글 슬러그 · 무한 스크롤 + scroll-snap(홈·상세 둘 다)
+- **콘텐츠 세 종류** — ① 안건(투표+댓글) ② 안건의 **배경 문단**(`context`, 참여 0명이어도 채워짐)
+  ③ **읽을거리**(`/blog`, 참여에 안 걸린 글). ②③은 2026-09-01·08-31에 추가됐다
+- 지금 수치는 `curl https://autokca.com/api/stats` — `source`·`indexed`·`indexThreshold`가 함께 온다.
+  스냅샷은 [[todo]] 맨 위
 - 컨셉 확정 2026-08-10 · 배포 2026-08-12 · **개선 8사이클**(5차 문서는 없다) 2026-08-13
 - 디자인: **투표용지와 기표 도장.** 관공서 활자 × "화장실 갈 때 휴대폰 들고 가나요?"의 낙차.
   도장 안 글자는 관공서 기표 부호(卜)가 아니라 브랜드 글자 **「오」**
+
+## 🚚 새 컴퓨터에서 이어받기
+
+`git clone`으로 **안 따라오는 것**이 셋 있다. 이것만 챙기면 된다.
+
+| 무엇 | 어디 | 왜 안 따라오나 | 어떻게 |
+|---|---|---|---|
+| **통합 개발 위키** | `d:/Gcalen/wiki` (404KB) | git 저장소지만 **원격이 없다** | 폴더째 복사하거나 GitHub에 push |
+| **기획 원본** | `d:/Gcalen/idea` (3.2MB) | **git 저장소가 아니다** | 폴더째 복사 |
+| **`.env.local`** | `autokca/.env.local` (키 5개) | `.gitignore` 대상 | 아래 참고 |
+
+- `idea/` 안에 `ottokke-brand.md` · `ottokke-ideas.md` · **`ottokke-seo.md`(2판)** ·
+  목업 HTML · 초기 카톡 캡처가 있다. **컨셉 구판이지만 SEO 2판은 아직 유효하다**
+- `.env.local` 5개 = `NEXT_PUBLIC_SITE_URL` · `SUPABASE_URL` · `SUPABASE_SERVICE_ROLE_KEY` ·
+  `ADMIN_TOKEN` · `INGEST_TOKEN`. 값은 Vercel 환경변수에도 있지만
+  **`SUPABASE_SERVICE_ROLE_KEY`는 Sensitive라 다시 못 읽는다** — 파일을 옮기거나
+  Supabase 대시보드에서 새로 발급한다(README §집계·댓글 붙이기)
+- 자매 저장소(`ttakcalc`·`whenstage`·`Game_sk`)는 원격이 있어 clone으로 온다.
+  ⚠️ `Game_sk`에 커밋 안 된 `wiki/`가 있다(2026-09-08 확인)
+- 새 컴퓨터에서: `npm install` → `.env.local` 넣고 `npm run dev`
 
 ## 코어
 
@@ -38,8 +62,8 @@
 - [[architecture]] — 라우트, 데이터 흐름, 집계·댓글 구조, **표본 임계치 단일 소스**,
   피드 순서 규칙, 쿠키가 진실인 이유, **읽을거리(`/blog`)를 코드에 두는 이유**
 - [[questions-log]] — 질문 큐 이력·작성 규칙. `id`/`slug` 불변 원칙과 그 이유
-- [[todo]] — 남은 작업. ⏸ **시딩은 의도적 보류**(2026-08-18 사용자 결정) —
-  미해결이 아니라 보류다. 점검 보고서가 매주 위험으로 올리지 않게 그렇게 적어 두었다
+- [[todo]] — 남은 작업 + **지금 수치 스냅샷**. 🔴 병목을 시딩으로 잘못 짚고 있었다는
+  2026-09-01 정정이 맨 위에 있다. 시딩은 ⏸ 보류(미해결 아님) — 지금 할 일은 **콘텐츠**다
 - [[question-inbox]] — 질문 후보 대기함. **주간 자동화가 채우고 사람이 골라 올린다**
   (브리프 §3 "생성은 자동, 발행은 수동"). id·slug이 영구 불변이라 자동 발행을 하지 않는다
 - [[unified-wiki-inbox]] — 원격 세션이 통합 위키로 보낼 지식을 쌓아두는 곳
