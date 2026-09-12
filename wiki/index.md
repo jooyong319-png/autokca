@@ -6,7 +6,7 @@
 **오또케(autokca)** = 한 줄 질문에 예/아니오로 투표하고, **투표한 사람만 댓글을 쓰는** 사이트.
 슬로건: *"이거 나만 그래?"*
 
-- 로컬 경로: `d:/Gcalen/autokca`
+- 로컬 경로: `C:/Make_Web/autokca`
 - **운영: https://autokca.com** (Vercel) · 저장소: github.com/jooyong319-png/autokca
 - **안건 = 코드 103개(진지 32 + 병맛 71) + 관리 화면 발행분.** `lib/catalog.ts`가 합친다.
   한글 슬러그 · 무한 스크롤 + scroll-snap(홈·상세 둘 다)
@@ -24,8 +24,8 @@
 
 | 무엇 | 어디 | 왜 안 따라오나 | 어떻게 |
 |---|---|---|---|
-| **통합 개발 위키** | `d:/Gcalen/wiki` (404KB) | git 저장소지만 **원격이 없다** | 폴더째 복사하거나 GitHub에 push |
-| **기획 원본** | `d:/Gcalen/idea` (3.2MB) | **git 저장소가 아니다** | 폴더째 복사 |
+| **통합 개발 위키** | `C:/Make_Web/wiki` | **git 저장소가 아니다** (2026-09-08에 git을 뗐다 — 사장님 결정) | 폴더째 복사 |
+| **기획 원본** | `C:/Make_Web/idea` (3.2MB) | **git 저장소가 아니다** | 폴더째 복사 |
 | **`.env.local`** | `autokca/.env.local` (키 5개) | `.gitignore` 대상 | 아래 참고 |
 
 - `idea/` 안에 `ottokke-brand.md` · `ottokke-ideas.md` · **`ottokke-seo.md`(2판)** ·
@@ -78,7 +78,7 @@
 ## 상위: 통합 개발 위키 (기술 지식, 재사용)
 
 Next.js·Vercel·Supabase·SEO·CSS 같은 **어느 프로젝트든 재사용되는 기술 지식**은 상위 통합 위키
-(`../../wiki/`, 즉 `d:/Gcalen/wiki/`)에 있다. 이 프로젝트에서 배운 것 중 재사용 가능한 것은
+(`../../wiki/`, 즉 `C:/Make_Web/wiki/`)에 있다. 이 프로젝트에서 배운 것 중 재사용 가능한 것은
 거기 옮겼다 — `next/og` 한글 폰트 함정, Supabase 레거시 키 비활성, scroll-snap mandatory 함정,
 한국어 `word-break: keep-all`.
 

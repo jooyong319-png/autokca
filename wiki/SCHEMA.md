@@ -10,10 +10,10 @@
 LLM 유지 위키다. 이 위키는 **오또케 전용 맥락**만 담는다: 왜 이 제품이 이 모양이 됐는지,
 버린 방향과 그 이유, 이 프로젝트만의 히스토리.
 
-- 로컬 경로: `d:/Gcalen/autokca`
+- 로컬 경로: `C:/Make_Web/autokca`
 - **운영: https://autokca.com** (Vercel) · 저장소: github.com/jooyong319-png/autokca
 - 시작일: 2026-08-10 (컨셉) / 2026-08-12 (배포)
-- 자매 프로젝트: [[ttakcalc]](`d:/Gcalen/ttakcalc`, 계산기) · WhenStage(콘서트 캘린더).
+- 자매 프로젝트: [[ttakcalc]](`C:/Make_Web/ttakcalc`, 계산기) · WhenStage(콘서트 캘린더).
   **오또케는 딱칼크와 서로 링크하지 않는다** — 별개 사업으로 본다(§기준 문서 §11).
 
 ## 🔴 기준 문서는 위키가 아니다
@@ -58,7 +58,7 @@ LLM 유지 위키다. 이 위키는 **오또케 전용 맥락**만 담는다: �
 ## 2단 위키 구조 (프로젝트 위키 + 통합 위키)
 
 - **이 위키(`autokca/wiki/`)** — 오또케 전용. 저장소 안에 있어 원격/클라우드 세션도 읽는다.
-- **통합 위키(`d:/Gcalen/wiki/`)** — Next.js·Vercel·Supabase·SEO·CSS 등 **어느 프로젝트든
+- **통합 위키(`C:/Make_Web/wiki/`)** — Next.js·Vercel·Supabase·SEO·CSS 등 **어느 프로젝트든
   재사용되는 기술 지식.** 이 프로젝트도 거기 정리된 패턴(soft-404 방지, `NEXT_PUBLIC_` Sensitive
   함정, dev+build 충돌, 네이버 서치어드바이저 필수 등)을 읽고 출발했다.
   ⚠️ 통합 위키는 이 저장소 **바깥의 로컬 폴더**라 `git clone`만 하는 원격 세션은 못 읽는다.
