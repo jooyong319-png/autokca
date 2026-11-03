@@ -29,6 +29,12 @@ const TOPICS = new Set([
   'money', 'work', 'manners', 'life', 'office', 'commute', 'food', 'messenger',
 ]);
 
+/** DB 시각은 UTC다. 그대로 자르면 한국 오전 9시 전에 올라온 질문의 작성일이 하루 앞선다. */
+function seoulDate(iso: string): string {
+  const t = Date.parse(iso);
+  return Number.isNaN(t) ? '' : new Date(t + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
 function shape(raw: unknown): Draft | null {
   if (!raw || typeof raw !== 'object') return null;
   const r = raw as Record<string, unknown>;
@@ -50,7 +56,7 @@ function shape(raw: unknown): Draft | null {
     publishedAt: typeof r.published_at === 'string' ? r.published_at : null,
     note,
     createdAt,
-    ai: ai && { ...ai, at: createdAt.slice(0, 10) },
+    ai: ai && { ...ai, at: seoulDate(createdAt) },
   };
 }
 

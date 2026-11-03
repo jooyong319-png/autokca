@@ -495,6 +495,9 @@ export function byKind(kind: Kind): Question[] {
 /** @param all 대상 목록. **코드 103개가 아니라 `catalog()`의 병합 결과를 넘긴다** —
  *  관리 화면에서 발행한 안건도 피드에 나와야 한다.
  *  모듈 상수를 직접 읽지 않는 이유가 이것이다. */
+/** 이 날 이후 올라온 질문은 표가 적어도 피드 앞에 둔다(`feedOrder`) */
+const FRESH_SINCE = '2026-11-03';
+
 export function feedOrder(
   all: readonly Question[],
   excludeId?: string,
@@ -507,8 +510,23 @@ export function feedOrder(
     /* 같은 순위면 원래 배열 순서를 지킨다 — 매 요청마다 순서가 흔들리면
        무한 스크롤에서 같은 질문이 두 번 나올 수 있다. */
     return list
-      .map((q, i) => ({ q, i, v: votesOf ? votesOf(q.id) : 0, d: voted?.(q.id) ? 1 : 0 }))
-      .sort((x, y) => x.d - y.d || y.v - x.v || x.i - y.i)
+      /* 🔴 새 질문을 표 순서로 묻지 않는다(2026-11-04). 표 많은 순이면 0표로 시작하는 새 질문이
+         영영 뒤에 있어서 표가 쌓이지 않고, 첫 화면이 옛 질문으로 고정된다(실제로 첫 12장이 전부 옛 것이었다).
+         0표 카드도 AI 칸이 있어 비어 보이지 않는다. 새것끼리는 최근 것부터. */
+      .map((q, i) => ({
+        q,
+        i,
+        v: votesOf ? votesOf(q.id) : 0,
+        d: voted?.(q.id) ? 1 : 0,
+        fresh: q.published && q.published >= FRESH_SINCE ? q.published : '',
+      }))
+      .sort(
+        (x, y) =>
+          x.d - y.d ||
+          y.fresh.localeCompare(x.fresh) ||
+          y.v - x.v ||
+          x.i - y.i,
+      )
       .map(x => x.q);
   };
 
