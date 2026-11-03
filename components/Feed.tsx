@@ -7,13 +7,14 @@ import type { Tally } from '@/lib/votes';
 import type { TopPair } from '@/lib/comments';
 import { AdSlot } from './AdSlot';
 import { Ballot } from './Ballot';
+import { Talk } from './Talk';
 import styles from './Feed.module.css';
 
 export interface FeedItem {
   question: Question;
   docNo: string;
   tally: Tally;
-  /** 카드에 "왜 그런지 N"으로 뜬다 — 상세로 넘어갈 동기(2차 §5) */
+  /** 카드에 "댓글 N"으로 뜬다 — 상세로 넘어갈 동기(2차 §5) */
   commentCount: number;
   /** 양 진영 1위 댓글 미리보기(6차 §2-1). 서버에서 실어 보낸다 —
    *  클라이언트가 나중에 채우면 카드 높이가 바뀌어 스냅 위치가 흔들린다. */
@@ -43,6 +44,9 @@ interface Props {
   progress?: boolean;
   /** 전체 질문 수 — 진행 인디케이터에 쓴다 */
   total?: number;
+  /** 넓은 화면에서 댓글 칸(`Talk`)을 카드 **오른쪽에 붙일지** — 홈 전용.
+   *  끄면(상세 아래 피드) 댓글 칸은 누를 때 아래에서 올라오는 창으로만 열린다. */
+  talk?: boolean;
 }
 
 /* 🔴 브리프 원칙 2 — 투표 후 홈으로 돌려보내지 않는다.
@@ -60,6 +64,7 @@ export function Feed({
   snap = false,
   progress = false,
   total,
+  talk = false,
 }: Props) {
   const [items, setItems] = useState<FeedItem[]>(initial);
   const [offset, setOffset] = useState(startOffset);
@@ -142,7 +147,8 @@ export function Feed({
 
 
   return (
-    <div ref={wrap} className={styles.wrap}>
+    /* `data-talk`는 globals.css가 종이 폭을 넓히는 표식이다(:root:has([data-talk])) */
+    <div ref={wrap} className={styles.wrap} data-talk={talk && snap ? '' : undefined}>
       {/* 🔴 sticky 헤더 안으로 포털(4차 §3-1). 전에는 헤더 아래 따로 떠 있어
           소속이 불분명했다. 자리를 못 찾으면 아무것도 그리지 않는다 —
           진행 표시는 보조 정보라 없어도 이동에 지장이 없다. */}
@@ -177,8 +183,12 @@ export function Feed({
           </>
         );
         return snap ? (
-          <div key={item.question.id} className={styles.slide}>
+          <div
+            key={item.question.id}
+            className={`${styles.slide} ${talk ? styles.twoCol : ''}`}
+          >
             {card}
+            <Talk question={item.question} side={talk} />
             {/* 다음이 있다는 신호. 첫 장에만 — 103장 전부면 소음이다(4차 §3-2).
                 상세에서는 바로 위 "↓ 다음 안건으로"가 같은 말을 하므로 내지 않는다. */}
             {progress && i === 0 && <p className={styles.cue}>↓ 다음 안건</p>}

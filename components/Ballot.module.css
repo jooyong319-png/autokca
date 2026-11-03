@@ -345,10 +345,20 @@
   letter-spacing: -0.03em;
 }
 .track {
+  position: relative;
   height: 11px;
   background: var(--sunken);
   border: 1px solid var(--rule);
-  overflow: hidden;
+}
+.fill { max-width: 100%; }
+/* AI 예측 눈금 — 막대 위아래로 살짝 튀어나온 선. 색은 잉크(다수파 인주색과 겹치지 않게) */
+.aiTick {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--ink);
 }
 .fill {
   height: 100%;
@@ -598,4 +608,11 @@
     padding: 0.5rem 0.55rem;
     min-height: 44px;
   }
+}
+
+/* 2열에서는 오른쪽 토론 칸이 같은 일(양 진영 한 줄씩)을 더 크게 한다 — 겹치므로 감춘다 */
+@media (min-width: 1200px) {
+  :global([data-talk]) .voices,
+  :global([data-talk]) .say,
+  :global([data-talk]) .talkBtn { display: none; }
 }

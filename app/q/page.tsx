@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { AiRowTag } from '@/components/AiRowTag';
 import { BreadcrumbJsonLd } from '@/components/JsonLd';
 import { TOPICS } from '@/lib/questions';
 import { catalog } from '@/lib/catalog';
@@ -50,6 +51,7 @@ export default async function QuestionIndex() {
               {q.q}
             </a>
             <span className={styles.itemOptions}>{q.a} · {q.b}</span>
+            <AiRowTag question={q} />
           </li>
         ))}
       </ol>

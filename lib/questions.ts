@@ -18,6 +18,8 @@
  * ⚠️ `slug`은 URL이다. 바꾸면 색인과 외부 링크가 깨진다. 역시 배포 후 고정이다.
  */
 
+import type { AiTake } from './ai';
+
 export type TopicSlug =
   | 'money'
   | 'work'
@@ -57,6 +59,8 @@ export interface Question {
   /** 처음 게시된 날(ISO). **관리 화면에서 발행한 안건만 값이 있다** —
    *  코드에 박힌 103개는 전부 같은 날이라 `QUESTIONS_PUBLISHED`를 쓴다. */
   published?: string;
+  /** AI 답. 자동 발행분만 값이 있다(lib/drafts.ts). 나머지는 `lib/ai.ts`의 표 — `takeOf`로 읽는다. */
+  ai?: AiTake | null;
 }
 
 /* 🔴 구조화 데이터의 `datePublished`는 **필수**다(구글 DiscussionForumPosting).

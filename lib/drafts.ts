@@ -1,5 +1,7 @@
 import { rpc } from './supabase';
 import type { Kind, TopicSlug } from './questions';
+import type { AiTake } from './ai';
+import { decodeNote } from './questionGuard';
 
 /* 질문 후보와 발행분.
  *
@@ -19,6 +21,8 @@ export interface Draft {
   publishedAt: string | null;
   note: string;
   createdAt: string;
+  /** 자동 발행분의 AI 답. `note` 칸에 함께 저장돼 있다(questionGuard.ts) */
+  ai: AiTake | null;
 }
 
 const TOPICS = new Set([
@@ -33,6 +37,8 @@ function shape(raw: unknown): Draft | null {
   /* DB 제약과 별개로 여기서도 막는다 — 값이 이상하면 화면이 깨지는 게 아니라 조용히 빠진다 */
   if (!TOPICS.has(r.topic as string)) return null;
   if (r.kind !== 'serious' && r.kind !== 'meme') return null;
+  const createdAt = typeof r.created_at === 'string' ? r.created_at : '';
+  const { note, ai } = decodeNote(typeof r.note === 'string' ? r.note : '');
   return {
     id: r.id as string,
     slug: r.slug as string,
@@ -42,8 +48,9 @@ function shape(raw: unknown): Draft | null {
     topic: r.topic as TopicSlug,
     kind: r.kind as Kind,
     publishedAt: typeof r.published_at === 'string' ? r.published_at : null,
-    note: typeof r.note === 'string' ? r.note : '',
-    createdAt: typeof r.created_at === 'string' ? r.created_at : '',
+    note,
+    createdAt,
+    ai: ai && { ...ai, at: createdAt.slice(0, 10) },
   };
 }
 
@@ -59,9 +66,14 @@ export async function allDrafts(): Promise<Draft[]> {
  *  ⚠️ 60초 캐시. 발행 직후 반영이 조금 늦을 수 있는데, 그게 매 요청 DB 왕복보다 낫다.
  *  관리 화면은 위 `allDrafts()`로 캐시 없이 본다. */
 export async function publishedDrafts(): Promise<Draft[]> {
-  const raw = await rpc('published_questions', {}, 60);
+  /* 🔴 `published_questions`가 아니라 `all_drafts`를 거른다 — AI 답이 든 `note`는 이쪽만 준다.
+     함수를 고치려면 운영 DB에 DDL이 필요해서 있는 것을 쓴다. 서버에서만 부르는 함수다. */
+  const raw = await rpc('all_drafts', {}, 60);
   if (!Array.isArray(raw)) return [];
-  return raw.map(shape).filter((d): d is Draft => d !== null);
+  return raw
+    .map(shape)
+    .filter((d): d is Draft => d !== null && d.publishedAt !== null)
+    .sort((x, y) => (x.publishedAt as string).localeCompare(y.publishedAt as string));
 }
 
 /** 체크박스 on/off. 🔴 발행 취소는 **표를 지우지 않는다** — 화면에서 내릴 뿐이다. */

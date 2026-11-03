@@ -4,6 +4,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { topicBySlug, type Question } from '@/lib/questions';
 import type { TopPair } from '@/lib/comments';
 import { CardSay } from './CardSay';
+import { AiBox } from './AiBox';
+import { takeOf } from '@/lib/ai';
+import { announceVote, rememberPick } from '@/lib/aiMatch';
+import { COMMENT_EVENT, openTalk, type CommentDetail } from '@/lib/talk';
 import type { Tally } from '@/lib/votes';
 import { SITE } from '@/lib/site';
 import { TIER, resultNotice, showsResult, showsVerdict, stageOf, totalOf } from '@/lib/tiers';
@@ -56,6 +60,8 @@ function writeJSON(key: string, value: unknown): void {
   } catch {
     /* 저장이 막혀 있어도 투표 자체는 되어야 한다 */
   }
+  /* 도장판·댓글 칸이 같은 페이지에서 바로 갱신되게(lib/aiMatch.ts) */
+  if (key === VOTED_KEY) announceVote();
 }
 
 export function Ballot({
@@ -91,6 +97,29 @@ export function Ballot({
      되돌리고 이유를 알려주므로 사용자가 갇히지 않는다. 반대로 비관하면
      아직 사유를 안 쓴 사람도 잠긴 화면을 잠깐 보게 된다. */
   const locked = justWrote || (server?.wrote ?? false);
+
+  /* 자동 발행분의 AI 선택을 도장판이 찾을 수 있게 남긴다(lib/aiMatch.ts) */
+  useEffect(() => {
+    if (question.ai?.pick) rememberPick(question.id, question.ai.pick);
+  }, [question.ai?.pick, question.id]);
+
+  /* 댓글 칸(`Talk`)에서 쓴 것도 기표를 잠근다 — 카드 입력칸에서 쓴 것과 같은 효과다 */
+  useEffect(() => {
+    const on = (e: Event) => {
+      if ((e as CustomEvent<CommentDetail>).detail?.questionId === question.id) setJustWrote(true);
+    };
+    window.addEventListener(COMMENT_EVENT, on);
+    return () => window.removeEventListener(COMMENT_EVENT, on);
+  }, [question.id]);
+
+  /* 🔴 피드 카드에서는 댓글을 **그 자리에서** 연다(2026-11-04) — PC는 옆 칸, 휴대폰은 아래 창.
+     링크(href)는 남겨 둔다: 스크립트가 없거나 새 탭으로 열면 상세의 댓글 섹션으로 간다.
+     상세의 주 카드는 같은 페이지 아래 댓글 섹션으로 가는 앵커 그대로다. */
+  const toTalk = (e: React.MouseEvent) => {
+    if (standalone || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    e.preventDefault();
+    openTalk(question.id);
+  };
 
   useEffect(() => {
     const mine = readJSON<Record<string, Choice>>(VOTED_KEY, {})[question.id];
@@ -218,6 +247,8 @@ export function Ballot({
   const pctB = 100 - pctA;
   const lead: Choice = pctA >= pctB ? 'a' : 'b';
   const myPct = choice === 'a' ? pctA : pctB;
+  /* AI 답이 없는 안건이면 AI 칸을 그리지 않는다 */
+  const ai = takeOf(question);
 
   /* 내 기록 — 다수파였던 적.
    *
@@ -260,6 +291,8 @@ export function Ballot({
     const lines = [question.q];
     if (showsResult(stage)) {
       lines.push(`${question.a} ${pct(pctA)} · ${question.b} ${pct(pctB)}`);
+      /* AI의 오답이 공유 거리다(브리프 §0) */
+      if (ai) lines.push(`(AI는 ${question.a} ${ai.guess}%라고 했음)`);
     }
     lines.push('당신은 어느 쪽?');
 
@@ -278,7 +311,7 @@ export function Ballot({
       /* 사용자가 공유 시트를 닫아도 여기로 온다 — 실패로 표시하지 않는다 */
       setCopied(false);
     }
-  }, [pctA, pctB, question, stage]);
+  }, [ai, pctA, pctB, question, stage]);
 
   /* 다음 카드로 부드럽게 내려간다. 헤더 오프셋은 `html { scroll-padding-top }`이 처리한다.
    *
@@ -329,6 +362,15 @@ export function Ballot({
       </div>
       <div className={styles.track}>
         <div className={styles.fill} style={{ width: `${pct.toFixed(1)}%` }} />
+        {/* AI 예측 눈금(브리프 §0). 막대가 아니라 선이다 — AI는 표가 아니다 */}
+        {ai && (
+          <span
+            className={styles.aiTick}
+            style={{ left: `${key === 'a' ? ai.guess : 100 - ai.guess}%` }}
+            title={`AI 예측 ${key === 'a' ? ai.guess : 100 - ai.guess}%`}
+            aria-hidden="true"
+          />
+        )}
       </div>
     </div>
   );
@@ -436,20 +478,34 @@ export function Ballot({
         {total > 0 && <span className={styles.statDot}>·</span>}
         {/* 🔴 0개일 때도 자리를 비우지 않는다(3차 §3) — "남기기"로 작성을 유도한다.
             댓글은 체류시간이자 SEO 본문이고, 상세 유입이 곧 사이트 성장이다.
-            상세의 댓글 섹션으로 앵커 이동한다. */}
+            피드에서는 댓글 칸을 연다(`toTalk`). */}
         <a
           className={styles.statLink}
           href={`/q/${encodeURIComponent(question.slug)}#왜-그런지`}
+          onClick={toTalk}
         >
           {commentCount > 0 ? (
             <>
-              왜 그런지 <b>{commentCount}</b>
+              댓글 <b>{commentCount}</b>
             </>
           ) : (
-            <>왜 그런지 남기기</>
+            <>댓글 남기기</>
           )}
         </a>
       </p>
+
+      {ai && (
+        <AiBox
+          take={ai}
+          a={question.a}
+          b={question.b}
+          choice={choice}
+          showResult={hasResult}
+          showVerdict={hasResult && showsVerdict(stage)}
+          pctA={pctA}
+          showDate={standalone}
+        />
+      )}
 
       {hasResult ? (
         <div className={styles.tally}>
@@ -511,6 +567,7 @@ export function Ballot({
                 showsResult(stage) && lead === key ? styles.voiceLead : ''
               }`}
               href={`/q/${encodeURIComponent(question.slug)}#왜-그런지`}
+              onClick={toTalk}
             >
               <span className={styles.voiceSide}>
                 <span className={styles.voiceSideName}>
@@ -554,14 +611,16 @@ export function Ballot({
        *  이어지는 피드의 카드들은 각자 다른 안건이므로 그대로 보여준다.
        *
        *  이미 썼으면 감춘다(1안건 1의견). */}
+      {/* PC 2열에서는 감춘다(`.say`) — 옆 댓글 칸 아래에 같은 입력칸이 있다 */}
       {!standalone && choice && !locked && (
-        <CardSay
-          questionId={question.id}
-          slug={question.slug}
-          sideLabel={question[choice]}
-          placeholder={sayPlaceholder}
-          onWrote={() => setJustWrote(true)}
-        />
+        <div className={styles.say}>
+          <CardSay
+            questionId={question.id}
+            sideLabel={question[choice]}
+            placeholder={sayPlaceholder}
+            onWrote={() => setJustWrote(true)}
+          />
+        </div>
       )}
 
       <div className={styles.acts}>
@@ -574,9 +633,14 @@ export function Ballot({
          *  문구가 "이 질문만 보기"였다. 페이지 **구조**를 설명하는 말이라
          *  눌러서 뭘 얻는지가 안 보였다. 실제로 상세에서 얻는 것은 **댓글**이다 —
          *  바로 위 인용 두 줄이 예고편이고 전문은 거기 있다. 그걸 그대로 말한다. */}
+        {/* PC 2열에서는 감춘다(`.talkBtn`) — 댓글이 이미 옆에 보인다 */}
         {!standalone && (
-          <a className={styles.btn} href={`/q/${encodeURIComponent(question.slug)}#왜-그런지`}>
-            댓글 확인 →
+          <a
+            className={`${styles.btn} ${styles.talkBtn}`}
+            href={`/q/${encodeURIComponent(question.slug)}#왜-그런지`}
+            onClick={toTalk}
+          >
+            댓글 보기
           </a>
         )}
 

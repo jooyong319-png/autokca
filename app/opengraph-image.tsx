@@ -8,7 +8,7 @@ export const runtime = 'nodejs';
    요청 시 생성으로 돌리면 빌드는 어디서든 통과하고, 비용은 OG_CACHE가 흡수한다. */
 export const dynamic = 'force-dynamic';
 
-export const alt = '오또케 — 이거 나만 그래?';
+export const alt = '오또케 — AI는 벌써 찍었어요';
 export const size = OG_SIZE;
 export const contentType = 'image/png';
 

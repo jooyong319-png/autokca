@@ -1,3 +1,4 @@
+import { AiRowTag } from '@/components/AiRowTag';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { BreadcrumbJsonLd } from '@/components/JsonLd';
@@ -72,6 +73,7 @@ export default async function TopicPage({ params }: Params) {
               {q.q}
             </a>
             <span className={styles.itemOptions}>{q.a} · {q.b}</span>
+            <AiRowTag question={q} />
           </li>
         ))}
       </ol>

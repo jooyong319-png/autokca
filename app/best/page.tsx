@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
+import { AiRowTag } from '@/components/AiRowTag';
 import { BreadcrumbJsonLd } from '@/components/JsonLd';
+import { takeOf } from '@/lib/ai';
 import { catalog } from '@/lib/catalog';
 import { SITE } from '@/lib/site';
 import { TIER } from '@/lib/tiers';
@@ -55,7 +57,10 @@ export default async function BestPage() {
       <span className={styles.itemOptions}>
         {x.q.a} {Math.round(x.pctA)}% · {x.q.b} {Math.round(100 - x.pctA)}% ·
         {' '}{x.total.toLocaleString('ko-KR')}명
+        {/* 여기는 비율이 이미 공개돼 있다 — AI 예측 수치를 나란히 둔다. 선택은 AiRowTag가 가린다 */}
+        {takeOf(x.q) ? ` · AI 예측 ${x.q.a} ${takeOf(x.q)?.guess}%` : ''}
       </span>
+      <AiRowTag question={x.q} />
     </li>
   );
 

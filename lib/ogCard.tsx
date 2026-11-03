@@ -1,6 +1,8 @@
+import { AI_HIT, takeOf } from './ai';
 import type { Question } from './questions';
 import { outcome } from './seo';
 import { SITE } from './site';
+import { showsVerdict, stageOf } from './tiers';
 import type { Tally } from './votes';
 
 /* 공유 카드(브리프 §7·원칙 4).
@@ -127,10 +129,10 @@ export function SiteCard() {
             color: SEAL,
           }}
         >
-          이거 나만 그래?
+          {SITE.tagline}
         </div>
         <div style={{ display: 'flex', fontSize: 26, color: '#8a837a' }}>
-          한 줄 질문에 투표하고 결과를 바로 확인 · {domainLabel()}
+          AI 예측이 맞았는지 확인 · {domainLabel()}
         </div>
       </div>
     </div>
@@ -152,13 +154,31 @@ export function QuestionCard({
   const pctA = total > 0 ? Math.round((tally.a / total) * 100) : 50;
   const pctB = 100 - pctA;
 
+  /* 🔴 "AI 예측 vs 실제"가 캡처의 본체다(브리프 §0, 원칙 4).
+     AI의 **선택**은 싣지 않는다 — 카드를 본 사람은 아직 투표 전이다. 수치 예측만 쓴다.
+     "빗나감" 단정은 화면과 같은 선(`showsVerdict`)에서만 한다. */
+  const ai = takeOf(question);
+  const gap = ai ? Math.abs(pctA - ai.guess) : 0;
+  const aiLine = !ai
+    ? null
+    : !o
+      ? ai.pick
+        ? 'AI는 벌써 찍었어요. 님은요?'
+        : 'AI는 예측만 해 뒀어요. 님은요?'
+      : `AI 예측 ${ai.guess}% → 실제 ${pctA}% (${question.a})`
+        + (!showsVerdict(stageOf(tally))
+          ? ''
+          : gap <= AI_HIT
+            ? ' · AI가 맞혔어요'
+            : ` · AI ${gap}%p 빗나감`);
+
   return (
     <div
       style={{
         width: '100%',
         height: '100%',
         display: 'flex',
-        padding: 56,
+        padding: 40,
         background: ROOM,
         fontFamily: 'OGKorean',
       }}
@@ -170,7 +190,7 @@ export function QuestionCard({
           flexDirection: 'column',
           background: PAPER,
           border: '1px solid #dcd6c9',
-          padding: '44px 56px',
+          padding: '30px 52px',
         }}
       >
         <div
@@ -195,10 +215,10 @@ export function QuestionCard({
             flex: 1,
             display: 'flex',
             alignItems: 'center',
-            fontSize: question.q.length > 26 ? 54 : 64,
+            fontSize: question.q.length > 22 ? 46 : 58,
             fontWeight: 700,
             color: INK,
-            lineHeight: 1.32,
+            lineHeight: 1.25,
             letterSpacing: '-0.04em',
             /* 화면과 같은 한국어 줄바꿈 규칙(§1-1). 없으면 "축의금 5 / 만원"으로 끊긴다. */
             wordBreak: 'keep-all',
@@ -231,7 +251,9 @@ export function QuestionCard({
                     <span>{name}</span>
                     <span>{pct}%</span>
                   </div>
-                  <div style={{ display: 'flex', height: 16, background: '#f1eee6' }}>
+                  <div
+                    style={{ display: 'flex', position: 'relative', height: 16, background: '#f1eee6' }}
+                  >
                     <div
                       style={{
                         width: `${pct}%`,
@@ -239,6 +261,19 @@ export function QuestionCard({
                         background: isLead ? SEAL : '#8a837a',
                       }}
                     />
+                    {/* AI 예측 눈금 — 화면의 결과 막대와 같은 표시다 */}
+                    {ai && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          left: `${key === 'a' ? ai.guess : 100 - ai.guess}%`,
+                          top: -6,
+                          width: 4,
+                          height: 28,
+                          background: INK,
+                        }}
+                      />
+                    )}
                   </div>
                 </div>
               );
@@ -261,12 +296,39 @@ export function QuestionCard({
           </div>
         )}
 
+        {aiLine && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 14,
+              marginTop: 16,
+              fontSize: 28,
+              fontWeight: 700,
+              color: INK,
+            }}
+          >
+            <span
+              style={{
+                display: 'flex',
+                padding: '2px 12px',
+                fontSize: 22,
+                color: PAPER,
+                background: INK,
+              }}
+            >
+              AI
+            </span>
+            <span>{aiLine}</span>
+          </div>
+        )}
+
         {/* 🔴 워터마크 — 캡처가 광고가 되게 하는 유일한 장치 */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            marginTop: 22,
+            marginTop: 10,
             fontSize: 24,
             color: '#8a837a',
           }}
@@ -276,7 +338,7 @@ export function QuestionCard({
             {domainLabel()}
           </span>
           <div style={{ display: 'flex', marginLeft: 'auto' }}>
-            <Seal size={64} />
+            <Seal size={52} />
           </div>
         </div>
       </div>

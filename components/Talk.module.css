@@ -1,0 +1,207 @@
+/* 댓글 칸 — 투표용지 옆에 붙은 **두 번째 종이**. 같은 용지·같은 그림자를 써서 한 벌로 읽히게 하고,
+   위 테두리를 굵게 해 "의견란"이라는 다른 서식임을 표시한다. */
+
+/* ─── PC 옆 칸 ─────────────────────────────────────────── */
+/* 🔴 높이를 화면에 맞춘다 — 카드·댓글·입력칸이 **한 화면에** 다 보여야 한다(사용자 11-04).
+   목록만 안에서 스크롤되고 입력칸(.foot)은 아래에 붙는다. sticky라 카드가 화면보다 길어도
+   칸은 따라 내려온다. 값은 Feed.module.css `.slide`의 min-height와 같은 식이다. */
+.talk {
+  position: sticky;
+  top: var(--header-clear);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 9.5rem);
+  min-width: 0;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--paper-edge);
+  border-top: 3px solid var(--ink);
+  box-shadow: var(--shadow);
+}
+.talk > .head { padding: 1rem 1.1rem 0.5rem; }
+.talk > .list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.75rem 1.1rem;
+}
+.talk > .foot { padding: 0.75rem 1.1rem 1rem; }
+
+/* 상세 페이지 — 좁은 화면에서는 카드 아래에 **다 펼친다.** 안쪽 스크롤도, 높이 제한도 없다
+   (페이지 자체가 읽는 자리다). 넓은 화면에서는 위의 옆 칸 규칙 그대로. */
+@media (max-width: 1199.98px) {
+  .page { position: static; max-height: none; }
+  .page > .list { overflow: visible; }
+}
+.page { scroll-margin-top: var(--header-clear); }
+
+/* ─── 휴대폰 창 ─────────────────────────────────────────── */
+.sheet {
+  position: fixed;
+  inset: auto 0 0 0;
+  width: 100%;
+  max-width: 640px;
+  max-height: 84dvh;
+  margin: 0 auto;
+  padding: 0;
+  border: 0;
+  border-top: 3px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 -18px 40px -20px rgba(22, 21, 20, 0.45);
+  overscroll-behavior: contain;
+}
+.sheet::backdrop { background: rgba(22, 21, 20, 0.45); }
+.sheet[open] { animation: rise 0.22s ease-out; }
+@keyframes rise {
+  from { transform: translateY(24px); opacity: 0; }
+}
+.sheetInner {
+  display: flex;
+  flex-direction: column;
+  max-height: 84dvh;
+}
+.sheetQ {
+  margin: 0;
+  padding: 0.9rem 1.1rem 0;
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+.sheetInner > .head { padding: 0.6rem 1.1rem 0.5rem; }
+.sheetInner > .list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.75rem 1.1rem;
+}
+.sheetInner > .foot {
+  padding: 0.75rem 1.1rem calc(0.9rem + env(safe-area-inset-bottom));
+}
+
+/* ─── 공통 ─────────────────────────────────────────────── */
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  border-bottom: 1px solid var(--rule);
+}
+.title {
+  margin: 0;
+  font-family: var(--f-doc);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.count {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+}
+.close {
+  margin-left: auto;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  background: none;
+  border: 1px solid var(--rule-strong);
+  padding: 0.25rem 0.7rem;
+  cursor: pointer;
+}
+.close:focus-visible { outline: 2px solid var(--seal); outline-offset: 2px; }
+
+.list {
+  margin: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+/* 진영 띠 — 카드의 `.voices`와 같은 언어(세로 띠 + 진영 이름) */
+.item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.15rem 0.6rem;
+  padding-left: 0.7rem;
+  border-left: 3px solid var(--rule-strong);
+}
+.ours { border-left-color: var(--seal); }
+.fresh { background: var(--seal-soft); padding: 0.45rem 0.7rem; }
+
+/* AI는 표가 아니다 — 사람과 다른 바탕으로 구분한다 */
+.ai {
+  padding: 0.55rem 0.7rem;
+  border-left-color: var(--ink);
+  background: var(--sunken);
+}
+
+.who {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.aiTag {
+  font-family: var(--f-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--paper);
+  background: var(--ink);
+  border-radius: 2px;
+  padding: 0.12rem 0.32rem;
+}
+.side {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.freshTag {
+  font-size: 0.68rem;
+  color: var(--seal-ink);
+}
+
+.body {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.tools {
+  align-self: end;
+  display: flex;
+  gap: 0.6rem;
+}
+.tool {
+  font: inherit;
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  background: none;
+  border: 0;
+  padding: 0.1rem 0;
+  cursor: pointer;
+}
+.tool:hover:not(:disabled) { color: var(--seal); }
+.tool:focus-visible { outline: 2px solid var(--seal); outline-offset: 2px; }
+.report { opacity: 0.7; }
+.report:disabled { cursor: default; }
+.liked { color: var(--seal); cursor: default; }
+
+.empty {
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.foot { border-top: 1px solid var(--rule); }
+.gate {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--ink-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet[open] { animation: none; }
+}

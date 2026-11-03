@@ -36,6 +36,7 @@ export async function catalog(): Promise<Question[]> {
       /* 발행분은 **자기 등록일**을 갖는다. 코드 103개와 같은 날로 뭉뚱그리면
          나중에 발행한 안건이 사이트 개설일에 올라온 것처럼 표시된다. */
       published: d.createdAt || undefined,
+      ai: d.ai,
     });
   }
   return [...QUESTIONS, ...add];

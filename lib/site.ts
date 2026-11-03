@@ -22,10 +22,10 @@ export const SITE = {
   name: '오또케',
   wordmark: '오또케?!',
   url: siteUrl(),
-  tagline: '이거 나만 그래?',
+  tagline: 'AI는 벌써 찍었어요',
   description:
-    '한 줄 질문에 예/아니오로 투표하고, 투표한 사람만 댓글을 씁니다. '
-    + '나만 그런 줄 알았던 것들을 확인하세요.',
+    'AI가 먼저 찍어 둔 질문에 투표하고, AI 예측이 맞았는지 확인하세요. '
+    + '10개 찍으면 AI랑 얼마나 같은 사람인지 판정해 드려요.',
   /** 🔴 비워둘 수 없다 — 개인정보 보호법 제30조 ①6의 필수 기재사항(연락처).
    *  UGC를 받는 사이트라 삭제 요청·분쟁 창구로도 실제로 쓰인다. */
   email: 'devju546@gmail.com',
@@ -35,7 +35,7 @@ export const SITE = {
    *  전자상거래법 제10조(통신판매업자)에서 나오고, 오또케는 재화·용역을 팔지 않는다. */
   privacyOfficer: 'JuDev',
   /** 방침·약관 시행일. 내용을 고치면 이 날짜도 함께 올릴 것. */
-  effectiveDate: '2026-08-11',
+  effectiveDate: '2026-11-04',
 } as const;
 
 /* 표본 임계치는 `lib/tiers.ts`에 있다.

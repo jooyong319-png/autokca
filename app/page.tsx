@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { Feed, type FeedItem } from '@/components/Feed';
+import { HomeIntro } from '@/components/HomeIntro';
 import { docNumber, feedOrder, questionOfDay, seoulDayKey } from '@/lib/questions';
 import { catalog } from '@/lib/catalog';
+import { takeOf } from '@/lib/ai';
 import { SITE } from '@/lib/site';
 import { readAllCommentCounts, readAllTopComments } from '@/lib/comments';
 import { readAllTallies, readTally } from '@/lib/votes';
@@ -69,8 +71,14 @@ export default async function HomePage() {
    *
    *  🔴 **날짜로 정한다**(`Math.random()`이 아니다). 무작위면 새로고침마다 바뀌어
    *  ISR 캐시가 무의미해지고 "오늘의 안건"으로 인식되지도 않는다.
-   *  하루 종일 같은 값이라 `revalidate = 60` 캐시가 그대로 유효하다. */
-  const rankedSerious = order.filter(q => q.kind === 'serious' && votesOf(q.id) > 0);
+   *  하루 종일 같은 값이라 `revalidate = 60` 캐시가 그대로 유효하다.
+   *
+   *  🔴 **AI가 기권한 안건은 첫 카드 후보에서 뺀다**(2026-11-04). 첫 화면의 약속이
+   *  "AI가 먼저 찍어 놨어요"인데 첫 카드에서 AI가 "안 찍을래요"라고 하면 그 약속이 깨진다.
+   *  실제로 주 4일제(기권)가 첫 카드로 걸렸었다. */
+  const rankedSerious = order.filter(
+    q => q.kind === 'serious' && votesOf(q.id) > 0 && takeOf(q)?.pick,
+  );
   const featured = questionOfDay(rankedSerious, seoulDayKey());
   const lead = featured ? [featured, ...order.filter(q => q.id !== featured.id)] : order;
 
@@ -91,14 +99,18 @@ export default async function HomePage() {
      `/api/feed`의 순서(개인화)가 다르므로, 빼지 않으면 같은 안건이 두 번 나온다.
      그래서 `startOffset`도 0이다 — 개인화된 목록의 처음부터 받는다. */
   return (
-    <Feed
-      initial={seed}
-      excludeId={seed[0]?.question.id}
-      startOffset={0}
-      snap
-      /* 헤더 진행 표시("제 N호 · 전체 N건")와 첫 장 힌트는 홈에서만 낸다 — 아래 주석 참고 */
-      progress
-      total={order.length}
-    />
+    <>
+      <HomeIntro />
+      <Feed
+        initial={seed}
+        excludeId={seed[0]?.question.id}
+        startOffset={0}
+        snap
+        /* 헤더 진행 표시("제 N호 · 전체 N건")와 첫 장 힌트는 홈에서만 낸다 — 아래 주석 참고 */
+        progress
+        total={order.length}
+        talk
+      />
+    </>
   );
 }

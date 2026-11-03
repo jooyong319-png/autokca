@@ -376,3 +376,27 @@ body::before {
 /* 개인정보처리방침은 법령상 다른 항목과 구분해 표시한다 */
 .footer-nav a.footer-strong { color: var(--room-ink); font-weight: 700; }
 .site-footer a { color: var(--room-ink); }
+
+/* 🔴 홈 피드 2열(Feed.module.css `.twoCol`)일 때만 종이 폭을 넓힌다.
+   토큰을 바꾸므로 고정 헤더도 같이 넓어져 워드마크가 카드와 계속 정렬된다(.masthead-bar 주석).
+   894 + 간격 + 토론 칸 360 = 약 1290. */
+@media (min-width: 1200px) {
+  :root:has([data-talk]) { --stage-w: 1290px; }
+}
+
+/* 댓글 창(<dialog>, components/Talk.tsx)이 열려 있는 동안 뒤 피드가 스크롤되지 않게 */
+html:has(dialog[open]) { overflow: hidden; }
+
+/* 상세 페이지의 카드 + 댓글 칸(app/q/[slug]/page.tsx). 홈 피드의 `.twoCol`과 같은 비율이다 */
+.detail-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+@media (min-width: 1200px) {
+  .detail-pair {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    align-items: start;
+  }
+}

@@ -1,0 +1,52 @@
+/* 칸 크기는 한 변수로 — 홈 안내문(큰 판)과 AI 칸(작은 판)이 같은 도형을 쓴다 */
+.board {
+  --s: clamp(24px, 7.2vw, 34px);
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: calc(var(--s) * 0.22);
+}
+.small { --s: 15px; gap: 3px; }
+
+.slot {
+  width: var(--s);
+  height: var(--s);
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  border: 1.5px dashed var(--rule-strong);
+  border-radius: 50%;
+  font-family: var(--f-sans);
+  font-weight: 800;
+  font-size: calc(var(--s) * 0.5);
+  line-height: 1;
+}
+.small .slot { border-width: 1px; font-size: 0; }
+
+/* 찍힌 칸 — Ballot의 기표 도장(.seal)과 같은 획 굵기 감각 */
+.same {
+  border: 2px solid var(--ink);
+  color: var(--ink);
+}
+.diff {
+  border: 2px solid var(--seal);
+  color: var(--seal);
+  transform: rotate(-12deg);
+}
+.small .same { background: var(--ink); border-width: 1px; }
+.small .diff { background: var(--seal); border-width: 1px; transform: none; }
+
+/* 방금 찍힌 칸만 도장 찍히듯 — 상태가 바뀐 것을 보여주는 움직임이다(장식 아님) */
+.same, .diff { animation: press 0.22s ease-out both; }
+@keyframes press {
+  from { transform: scale(1.6); opacity: 0; }
+}
+.diff { animation-name: press-tilt; }
+@keyframes press-tilt {
+  from { transform: scale(1.6) rotate(-12deg); opacity: 0; }
+  to   { transform: rotate(-12deg); }
+}
+.small .diff { animation-name: press; }
+
+@media (prefers-reduced-motion: reduce) {
+  .same, .diff { animation: none; }
+}

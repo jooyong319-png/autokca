@@ -8,6 +8,7 @@
  *  "들고 간다"를 "들고 갑니다"로 바꾸려면 활용 규칙이 필요하고, 그건 반드시 어딘가 틀린다.
  */
 
+import { takeOf } from './ai';
 import type { Question } from './questions';
 import { showsResult, stageOf, totalOf } from './tiers';
 import type { Tally } from './votes';
@@ -44,9 +45,16 @@ export function pageTitle(question: Question, tally: Tally): string {
  *  단 임계치 미만이면 outcome()이 null이라 여기서도 숫자가 안 나간다. */
 export function pageDescription(question: Question, tally: Tally): string {
   const o = outcome(question, tally);
-  if (!o) return `${question.q} 당신은 어느 쪽인가요? 투표하면 결과가 바로 보입니다.`;
+  const ai = takeOf(question);
+  /* 🔴 AI의 **선택**은 여기서도 밝히지 않는다(투표 전 비공개, 브리프 §0). 예측 수치만 쓴다.
+     기권한 안건에 "찍었다"고 쓰면 거짓이므로 문구를 나눈다. */
+  if (!o) {
+    const hook = ai?.pick ? 'AI는 벌써 찍었어요. ' : ai ? 'AI는 예측만 해 뒀어요. ' : '';
+    return `${question.q} ${hook}당신은 어느 쪽인가요? 투표하고 확인해 보세요.`;
+  }
   return (
     `응답자 ${o.total.toLocaleString('ko-KR')}명 중 ${o.percent}%가 "${o.label}"를 골랐습니다. `
+    + (ai ? `AI 예측은 "${question.a}" ${ai.guess}%. ` : '')
     + `${question.q} 당신은 어느 쪽인가요?`
   );
 }

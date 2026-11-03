@@ -1,0 +1,60 @@
+/* 종이가 아니라 **방(--room) 위의 안내문**이다. 종이를 또 깔면 투표용지가 두 장처럼 읽힌다
+   (Context.module.css와 같은 판단). 왼쪽 정렬 — 아래 카드의 왼쪽 선과 맞춘다. */
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.2rem 0.2rem 0.4rem;
+  color: var(--room-ink);
+  /* 🔴 스냅 지점으로 만든다. 아니면 `scroll-snap-type: y proximity`가 첫 화면을
+     첫 카드(.slide) 위치로 당겨 이 안내문이 헤더 뒤로 숨는다(실제로 그랬다). */
+  scroll-snap-align: start;
+  scroll-margin-top: var(--header-clear);
+}
+
+/* 명조로 — 카드 질문(굵은 고딕)과 다른 목소리여야 "안내"로 읽힌다 */
+.title {
+  margin: 0;
+  font-family: var(--f-doc);
+  font-size: clamp(1.35rem, 4.6vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.lead {
+  margin: 0;
+  max-width: 34rem;
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.9rem;
+  margin-top: 0.15rem;
+}
+
+.status {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+.status b { color: var(--ink); }
+.status a {
+  color: var(--seal-ink);
+  text-underline-offset: 3px;
+}
+
+.legend {
+  margin: 0;
+  font-size: 0.74rem;
+  color: var(--room-faint);
+}
+
+@media (max-width: 480px) {
+  .lead { font-size: 0.86rem; line-height: 1.6; }
+}

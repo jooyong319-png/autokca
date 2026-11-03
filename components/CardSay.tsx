@@ -1,9 +1,8 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { MAX_LENGTH } from '@/lib/comments';
-import { markLanding } from './CommentLanding';
+import { MAX_LENGTH, type Comment } from '@/lib/comments';
+import { announceComment, openTalk } from '@/lib/talk';
 import styles from './CardSay.module.css';
 
 /* 🔴 7차 §3 — 투표 직후 카드 안에서 바로 한 줄 쓰게 한다.
@@ -20,12 +19,15 @@ import styles from './CardSay.module.css';
  *   · **다음 안건으로 가는 조건이 되지 않는다.** 매번 글을 요구하면 3개쯤에서 지친다.
  *     대부분은 그냥 누르고 넘어가며 그게 정상이다. 유도는 하되 우회로는 항상 열려 있다.
  *   · `textarea`가 아니라 한 줄 `input` — 큰 상자는 "글을 써야 한다"는 부담을 준다.
+ *
+ *  🔴 2026-11-04부터 **상세 페이지로 데려가지 않는다.** 피드 카드마다 댓글 칸(`Talk`)이 생겨
+ *     — PC는 오른쪽, 휴대폰은 아래에서 올라오는 창 — 방금 쓴 한마디와 반대편 의견을
+ *     그 자리에서 보여줄 수 있다. 상세로 보내면 피드 흐름이 끊긴다(원칙 2).
+ *     같은 컴포넌트가 댓글 칸 안의 입력칸으로도 쓰인다.
  */
 
 interface Props {
   questionId: string;
-  /** 올린 뒤 이동할 상세 페이지의 슬러그 */
-  slug: string;
   /** 내가 기표한 쪽의 이름. "이 쪽으로 올라갑니다"에 쓴다. */
   sideLabel: string;
   /** 상황별 유도 문구(§3-4). 소수파일 때가 가장 잘 작동한다. */
@@ -34,8 +36,7 @@ interface Props {
   onWrote: () => void;
 }
 
-export function CardSay({ questionId, slug, sideLabel, placeholder, onWrote }: Props) {
-  const router = useRouter();
+export function CardSay({ questionId, sideLabel, placeholder, onWrote }: Props) {
   const [body, setBody] = useState('');
   const [error, setError] = useState<string | null>(null);
   /** 서버가 돌려준 **실제** 댓글. 낙관적 표시가 아니라 확정된 값이다 →
@@ -58,34 +59,14 @@ export function CardSay({ questionId, slug, sideLabel, placeholder, onWrote }: P
           body: JSON.stringify({ id: questionId, body }),
         });
         if (res.ok) {
-          const created = (await res.json().catch(() => null)) as
-            | { id: number; body: string; side: string }
-            | null;
-          setPosted(created ? { id: created.id, body: created.body } : { id: 0, body });
+          const created = (await res.json().catch(() => null)) as Comment | null;
+          setPosted({ id: created?.id ?? 0, body: created?.body ?? body });
           setBody('');
           onWrote();
-          /* 🔴 올린 뒤 **상세의 진영 칼럼으로 데려간다.**
-           *
-           *  방금 쓴 한마디가 어느 진영에 어떻게 걸렸는지 보는 것이 이 사이트의 보상이고
-           *  (진영 분리가 최대 차별점, 브리프 §4), 반대편 의견도 거기서 처음 마주친다.
-           *
-           *  브리프 원칙 2("돌려보내지 않는다")와 어긋나지 않는다 — 상세 페이지 아래에
-           *  **이어지는 피드가 그대로 있어서** 스크롤이 끊기지 않고 PV는 오히려 늘어난다.
-           *
-           *  ⚠️ 도착한 화면에 자기 댓글이 있어야 한다. 상세는 ISR 300초 + 목록 60초 캐시라
-           *  서버 HTML에는 없을 수 있다 → `Comments`가 마운트 즉시 한 번 받아오도록 고쳤다. */
-          /* 🔴 **0.9초 기다린 뒤** 이동한다(8차 §3-2).
-             누르자마자 화면이 바뀌면 등록됐는지 확인하지 못한 채 페이지가 전환되고,
-             모바일에서 한 번 깜빡이면 "오류가 났나" 하는 불안을 준다.
-             위에서 실제 댓글을 이미 그려 뒀으므로 그걸 눈으로 확인할 시간이다.
-
-             🔴 **URL에 해시를 넣지 않는다.** 해시가 있으면 브라우저가 즉시 그 위치로
-             점프해서 질문(본문)을 못 보고 지나간다. 대신 목표를 세션에 남기고
-             상세의 `CommentLanding`이 "최상단 착지 → 잠깐 → 아래로 스크롤"을 연출한다. */
-          if (created?.id) markLanding(created.id);
-          window.setTimeout(() => {
-            router.push(`/q/${encodeURIComponent(slug)}`);
-          }, 900);
+          /* 댓글 칸에 붙이고(PC는 옆에서 바로 보인다), 휴대폰에서는 창을 연다 —
+             방금 쓴 한마디가 어느 진영에 걸렸는지, 반대편은 뭐라는지가 이 자리의 보상이다 */
+          if (created?.id) announceComment(questionId, created);
+          openTalk(questionId);
           return;
         }
         const data = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -96,16 +77,16 @@ export function CardSay({ questionId, slug, sideLabel, placeholder, onWrote }: P
         setBusy(false);
       }
     },
-    [body, busy, onWrote, questionId, router, slug],
+    [body, busy, onWrote, questionId],
   );
 
   if (posted) {
-    /* 등록 확인 → 이동. 서버가 돌려준 실제 본문을 그대로 보여준다. */
+    /* 등록 확인. 서버가 돌려준 실제 본문을 그대로 보여준다. */
     return (
       <div className={styles.done}>
         <p className={styles.doneBody}>&ldquo;{posted.body}&rdquo;</p>
         <p className={styles.doneMeta}>
-          &ldquo;{sideLabel}&rdquo; 쪽에 접수했습니다 · 반대편 의견을 보러 갑니다…
+          &ldquo;{sideLabel}&rdquo; 쪽에 올렸어요
         </p>
       </div>
     );

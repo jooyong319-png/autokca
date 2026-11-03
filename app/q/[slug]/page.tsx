@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Ballot } from '@/components/Ballot';
-import { Comments } from '@/components/Comments';
-import { Context } from '@/components/Context';
-import { CommentLanding } from '@/components/CommentLanding';
+import { Talk } from '@/components/Talk';
+import { AiNote, Context } from '@/components/Context';
+import { takeOf } from '@/lib/ai';
 import { Feed, type FeedItem } from '@/components/Feed';
 import { BreadcrumbJsonLd, DiscussionJsonLd } from '@/components/JsonLd';
 import {
@@ -18,7 +18,6 @@ import { catalog, findBySlug } from '@/lib/catalog';
 import { pageDescription, pageTitle } from '@/lib/seo';
 import { SITE } from '@/lib/site';
 import { indexable } from '@/lib/tiers';
-import { isConfigured } from '@/lib/supabase';
 import { readAllTallies, readTally } from '@/lib/votes';
 
 export const revalidate = 300;
@@ -128,35 +127,38 @@ export default async function QuestionPage({ params }: Params) {
       />
       <DiscussionJsonLd question={question} tally={tally} comments={comments} />
 
-      {/* 카드에서 사유를 올리고 넘어온 경우에만 동작한다(세션 값이 있을 때).
-          검색으로 직접 들어온 사람에게는 아무 일도 일어나지 않는다. */}
-      <CommentLanding />
-
-      {/* `tops`는 이미 받아 온 topA·topB를 재사용한다 — 배치 RPC를 또 부르지 않는다.
-          아래 Comments도 같은 값을 쓰므로 카드와 댓글 섹션의 1위가 어긋나지 않는다. */}
+      {/* `tops`는 이미 받아 온 topA·topB를 재사용한다 — 배치 RPC를 또 부르지 않는다. */}
       {/* 🔴 `key`로 **안건이 바뀌면 상태를 통째로 버린다.**
        *
        *  `/q/A` → `/q/B`는 **같은 라우트 세그먼트**라 React가 컴포넌트를 재사용한다.
        *  그런데 이 세 컴포넌트는 props로 초기 상태를 잡는다(`useState(initial)`) —
        *  초기값은 마운트 때만 쓰이므로 **A의 집계·댓글·피드가 그대로 남는다.**
-       *  특히 `Comments`의 폴링은 기존 목록에 **병합**하므로 A의 댓글이 B 페이지에 섞인다.
+       *  특히 댓글 칸(`Talk`)은 받아 온 목록을 기존 목록에 **병합**하므로 A의 댓글이 B 페이지에 섞인다.
        *
        *  effect 의존성에 `question.id`를 넣는 것으로는 부족하다 — 서버 응답이 오기 전까지
        *  낡은 값이 보이고, 집계가 죽어 있으면 영영 안 고쳐진다.
        *  `key`가 바뀌면 React가 새 인스턴스를 만들어 그런 창이 아예 없다. */}
-      <Ballot
-        key={question.id}
-        question={question}
-        docNo={docNumber(question)}
-        tally={tally}
-        standalone
-        nextSlug={seed[0]?.question.slug}
-        commentCount={counts.a + counts.b}
-        tops={{
-          a: topA && { id: topA.id, body: topA.body, likes: topA.likes },
-          b: topB && { id: topB.id, body: topB.body, likes: topB.likes },
-        }}
-      />
+      {/* 🔴 카드와 댓글 칸을 **한 벌로** 둔다(2026-11-04) — PC는 나란히, 휴대폰은 위아래.
+       *  홈 피드와 같은 모양이다. 예전에는 카드 → 배경 문단 → 진영별 2열 댓글 섹션 순이었는데
+       *  홈에서 댓글이 카드 옆으로 오면서 상세만 다른 사이트처럼 보였다.
+       *  `data-talk`는 넓은 화면에서 종이 폭을 넓히는 표식이다(globals.css). */}
+      <div className="detail-pair" data-talk="">
+        <Ballot
+          key={question.id}
+          question={question}
+          docNo={docNumber(question)}
+          tally={tally}
+          standalone
+          nextSlug={seed[0]?.question.slug}
+          commentCount={counts.a + counts.b}
+          tops={{
+            a: topA && { id: topA.id, body: topA.body, likes: topA.likes },
+            b: topB && { id: topB.id, body: topB.body, likes: topB.likes },
+          }}
+        />
+        {/* 댓글이 곧 본문이다(브리프 §6) — 서버가 실어 보내 크롤러가 읽는다 */}
+        <Talk key={question.id} question={question} initial={comments} />
+      </div>
 
       {/* 🔴 배경 문단. 투표용지 **아래**, 댓글 **위**.
        *
@@ -167,15 +169,8 @@ export default async function QuestionPage({ params }: Params) {
        *  🔴 이게 이 페이지가 **참여 0명이어도 완성되게** 하는 부분이다. */}
       <Context text={question.context} />
 
-      {/* 댓글이 곧 본문이다(브리프 §6) — 전용 페이지에만 붙인다 */}
-      <Comments
-        key={question.id}
-        question={question}
-        initial={comments}
-        tops={{ a: topA, b: topB }}
-        counts={counts}
-        live={isConfigured()}
-      />
+      {/* AI의 답 — 접힌 채 본문에 들어간다(브리프 §0, `AiNote` 주석) */}
+      <AiNote take={takeOf(question)} a={question.a} b={question.b} />
 
       {/* 🔴 8차 §3-1(5단계)·§4 — 이탈 경로를 **명확히** 둔다.
           카드에서 사유를 올리면 이 페이지로 자동 이동하는데, 나가는 길이 안 보이면
@@ -191,7 +186,7 @@ export default async function QuestionPage({ params }: Params) {
           컴포넌트 밖이라 애초에 대상이 아니었다. 끌 이유가 없었고, 같은 카드가
           홈에서는 한 장씩 걸리고 상세에서는 안 걸려 스크롤이 고장 난 것처럼 보였다.
           `progress`(헤더 진행 표시·첫 장 힌트)는 홈 전용이라 여기서는 켜지 않는다. */}
-      <Feed key={question.id} initial={seed} excludeId={question.id} startOffset={2} snap />
+      <Feed key={question.id} initial={seed} excludeId={question.id} startOffset={2} snap talk />
     </>
   );
 }

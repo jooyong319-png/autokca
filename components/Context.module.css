@@ -32,3 +32,12 @@
 @media (max-width: 560px) {
   .body { font-size: 0.92rem; line-height: 1.75; }
 }
+
+/* AI의 답 — 접어 둔다(`AiNote` 주석). 펼침 단추도 여백 위의 메모 톤을 따른다 */
+.fold > .body { margin-top: 0.6rem; }
+.summary {
+  cursor: pointer;
+  font-size: 0.86rem;
+  color: var(--room-ink);
+}
+.summary:hover { color: var(--seal); }

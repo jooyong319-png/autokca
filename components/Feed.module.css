@@ -175,3 +175,24 @@
 @media (prefers-reduced-motion: reduce) {
   .cue { animation: none; opacity: 0.85; }
 }
+
+/* 🔴 2열 — 넓은 화면의 홈 피드(2026-11-04). 왼쪽 투표용지, 오른쪽 토론 칸(`Talk`).
+ *
+ *  1200px 미만에서는 아무것도 바뀌지 않는다. 투표용지 폭(894px)을 줄이지 않고
+ *  옆에 붙이므로 종이 폭 토큰이 같이 넓어진다(globals.css). Talk.tsx의 WIDE와 값이 같아야 한다.
+ *  토론 칸은 첫 행에만 놓는다 — 광고가 붙는 카드에서 광고는 왼쪽 열 아래로 간다. */
+@media (min-width: 1200px) {
+  .twoCol {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    /* 첫 행이 남은 높이를 다 먹는다 — 1열일 때 `section:first-child { flex: 1 }`과 같은 일 */
+    grid-template-rows: 1fr;
+    grid-auto-rows: auto;
+    gap: 0.7rem 1.1rem;
+  }
+  .twoCol > section:first-child { grid-column: 1; grid-row: 1; }
+  /* 내용 높이까지만 — 늘리면 댓글 0개인 대부분의 카드에서 빈 종이가 화면 절반을 차지한다 */
+  .twoCol > aside { grid-column: 2; grid-row: 1; align-self: start; }
+  .twoCol > :not(section):not(aside) { grid-column: 1; }
+  .twoCol > .cue { grid-column: 1 / -1; }
+}

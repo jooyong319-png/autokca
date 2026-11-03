@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { SITE } from '@/lib/site';
 import { showsResult, stageOf } from '@/lib/tiers';
+import { MATCH_GOAL, matchVerdict } from '@/lib/aiMatch';
+import { useMatch } from '@/components/useMatch';
 import styles from './certificate.module.css';
 
 export interface QuestionMeta {
@@ -83,6 +85,10 @@ export function Certificate({ questions, topics }: Props) {
   const [voted, setVoted] = useState<Map<string, 'a' | 'b'> | null>(null);
   const [record, setRecord] = useState<VoteRecord>({ n: 0, major: 0 });
   const [copied, setCopied] = useState(false);
+  /* AI 일치율(브리프 §0) — AI가 기권한 안건은 빠지므로 `total`과 다를 수 있다 */
+  const match = useMatch();
+  const aiPct = match.n > 0 ? Math.round((match.same / match.n) * 100) : null;
+  const aiJudged = aiPct !== null && match.n >= MATCH_GOAL;
 
   /* 기록은 전부 브라우저에만 있다 — 서버는 누가 무엇을 골랐는지 모른다 */
   useEffect(() => {
@@ -136,6 +142,7 @@ export function Certificate({ questions, topics }: Props) {
       '내 성향 확인서',
       `투표 ${total}개`,
       majorPct === null ? '다수파 비율 산정 불가' : `다수파였던 적 ${majorPct}%`,
+      aiJudged ? `AI랑 ${aiPct}% 같음. ${matchVerdict(aiPct)}` : `AI 판정까지 ${MATCH_GOAL - match.n}개`,
       `${SITE.wordmark} ${SITE.url}`,
     ];
     try {
@@ -145,7 +152,7 @@ export function Certificate({ questions, topics }: Props) {
     } catch {
       setCopied(false);
     }
-  }, [majorPct, total]);
+  }, [aiJudged, aiPct, majorPct, match.n, total]);
 
   /* 서버 렌더에서는 기록을 모른다 — 껍데기만 두고 값은 마운트 뒤에 채운다 */
   if (voted === null) {
@@ -214,6 +221,27 @@ export function Certificate({ questions, topics }: Props) {
                       : majorPct >= 45
                         ? '반반'
                         : '소수파에 자주 속하는 편'}
+                </td>
+              </tr>
+              <tr>
+                <th>AI랑 같은 편</th>
+                <td>
+                  {aiPct === null ? (
+                    <span className={styles.figure}>AI가 찍은 질문에 아직 투표하지 않았습니다</span>
+                  ) : (
+                    <>
+                      <span className={`${styles.figure} ${styles.big}`}>{aiPct}%</span>
+                      <span className={styles.figure}> ({match.same}/{match.n})</span>
+                    </>
+                  )}
+                </td>
+              </tr>
+              <tr>
+                <th>AI 판정</th>
+                <td>
+                  {aiJudged
+                    ? matchVerdict(aiPct)
+                    : `판정까지 ${MATCH_GOAL - match.n}개 더 찍어야 합니다`}
                 </td>
               </tr>
             </tbody>
