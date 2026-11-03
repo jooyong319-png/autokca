@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { catalog } from '@/lib/catalog';
+import { listed } from '@/lib/catalog';
 import { SITE } from '@/lib/site';
 import styles from '../legal.module.css';
 
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AboutPage() {
-  const all = await catalog();
+  const all = await listed();
   return (
     <article className={styles.doc}>
       <header className={styles.head}>

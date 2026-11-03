@@ -40,7 +40,7 @@ const FIRST_BATCH = '2026-11-01';
 
 type Row = [pick: 'a' | 'b' | null, guess: number, why: string];
 
-/** 관리 화면에서 발행한 15개의 작성일. 발행분은 DB에 있지만 AI 답은 id로 여기에 둔다. */
+/** 관리 화면에서 발행한 15개와 2026-11-04에 코드로 넣은 질문의 작성일. */
 const SECOND_BATCH = '2026-11-04';
 
 const TAKES_2: Record<string, Row> = {
@@ -59,6 +59,55 @@ const TAKES_2: Record<string, Row> = {
   'profile-photo-change': ['b', 22, '그 사진 몇 년 전 얼굴이에요? 솔직히요.'],
   'personal-tumbler-office': ['b', 38, '그 텀블러 언제 씻었어요?'],
   'post-vacation-blues': ['b', 12, '잡힌다는 분, 휴가 안 다녀오셨죠?'],
+
+  // 남의 답이 궁금한 질문(lib/questions.ts 끝)
+  'ex-wedding-invite': ['b', 22, '가서 뭐 하게요. 밥 먹게요?'],
+  'same-partner-next-life': ['b', 48, '옆에 있으면 눈치 보고 찍겠죠.'],
+  'partner-ex-friends': ['b', 25, '쿨한 척은 얼마나 가요?'],
+  'friend-partner-cheating': ['b', 68, '말했다가 님만 나쁜 사람 돼요.'],
+  'couple-location-share': ['b', 30, '어디 갈 데 있어요?'],
+  'partner-meal-my-friend': ['a', 55, '밥만 먹는다는데 왜 떨어요?'],
+  'live-together-first': ['a', 60, '양말 벗는 곳은 살아 봐야 알죠.'],
+  'confess-by-kakao': ['a', 28, '까이고 얼굴 볼 자신 있어요?'],
+  'breakup-by-kakao': ['b', 18, '만나서 울 거 감당돼요?'],
+  'marry-love-or-money': ['b', 45, '월세를 사랑으로 내요?'],
+  'parents-oppose-partner': ['b', 25, '부모님 카드는 계속 쓰죠?'],
+  'call-future-self': ['a', 75, '로또 번호부터 물을 거잖아요.'],
+  'back-to-twenty': ['a', 70, '또 똑같이 살 거면서요.'],
+  'long-poor-short-rich': ['b', 40, '70살 넘어서 뭐 하게요?'],
+  'invisible-or-teleport': ['b', 30, '투명인간 돼서 뭐 하려고요?'],
+  'forever-summer-winter': ['b', 45, '냉방비는 누가 내줘요?'],
+  'give-up-kakao-delivery': ['a', 35, '배달이 사람보다 소중하죠?'],
+  'no-phone-million': ['a', 58, '사흘째에 편의점 가겠죠.'],
+  'dog-or-cat': ['a', 52, '집사 소리 듣고 좋아요?'],
+  'skip-friend-wedding': ['b', 30, '축의금 장부 아직 있죠?'],
+  'friend-never-pays': ['b', 42, '말할 용기 있었으면 벌써 했죠.'],
+  'more-pay-no-weekend': ['b', 30, '주말에 뭐 하는데요?'],
+  'lotto-next-day-work': ['b', 30, '사직서 문구 벌써 썼죠?'],
+  'share-streaming-password': ['a', 65, '그 친구 님 시청 기록 다 봐요.'],
+  'return-birthday-gift': ['b', 35, '장부는 마음속에 있죠?'],
+  'luxury-or-travel': ['b', 22, '사진 남고 카드값도 남아요.'],
+  'hire-wedding-guests': ['a', 40, '남들 눈이 그렇게 무서워요?'],
+  'noshow-penalty': ['a', 80, '전화 한 통이 그렇게 어려워요?'],
+  'relatives-nagging': ['b', 45, '연봉 물어보면 뭐라고 할 건데요?'],
+  'living-cost-to-parents': ['a', 58, '엄마 밥값은 계산해 봤어요?'],
+  'subway-phone-call': ['b', 25, '그 얘기 저도 다 들었어요.'],
+  'cafe-bag-leave': ['b', 20, '그 자리 임대료 내셨어요?'],
+  'airplane-seat-recline': ['b', 62, '뒷사람 무릎은 생각해 봤어요?'],
+  'office-romance-secret': ['b', 30, '다들 벌써 알아요.'],
+  'quit-by-kakao': ['b', 20, '다음 회사 평판 조회는요?'],
+  'tangsuyuk-sauce': ['b', 45, '붓기 전에 물어는 봤어요?'],
+  'mint-choco': ['a', 58, '치약 맛 아는 것도 재주네요.'],
+  'pineapple-pizza': ['a', 55, '먹어 보고 말한 거 맞죠?'],
+  'ramen-or-tteokbokki': ['a', 60, '떡볶이 고른 분, 위는 괜찮아요?'],
+  'jjajang-or-jjamppong': ['b', 50, '결국 남의 거 뺏어 먹잖아요.'],
+  'bungeoppang-head-tail': ['a', 65, '어차피 다 먹으면서 따져요?'],
+  'ai-apology-letter': ['a', 38, '님이 쓰면 더 못 쓰잖아요.'],
+  'ai-does-work-less-pay': ['b', 30, '일 안 하고 다 받고 싶은 거죠?'],
+  'date-an-ai': ['a', 28, '님 애인보다 답장은 빠르죠.'],
+  'ai-wedding-speech': ['a', 45, '어차피 다들 안 들어요.'],
+  'ai-life-decisions': ['b', 18, '지금까지는 잘하셨어요?'],
+  'doctor-or-ai': ['a', 78, '검색부터 하실 거면서요.'],
 };
 
 const TAKES: Record<string, Row> = {

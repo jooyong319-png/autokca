@@ -1,4 +1,4 @@
-import { QUESTIONS, type Question } from './questions';
+import { QUESTIONS, RETIRED, type Question } from './questions';
 import { publishedDrafts } from './drafts';
 
 /* 사이트가 실제로 쓰는 안건 목록 = **코드 103개 + DB 발행분**.
@@ -42,6 +42,11 @@ export async function catalog(): Promise<Question[]> {
   return [...QUESTIONS, ...add];
 }
 
+/** 목록 화면용 — 내린 안건(`RETIRED`)을 뺀다. 조회·집계·사이트맵은 `catalog()` 그대로 쓴다. */
+export async function listed(): Promise<Question[]> {
+  return (await catalog()).filter(q => !RETIRED.has(q.id));
+}
+
 export async function findBySlug(slug: string): Promise<Question | undefined> {
   return (await catalog()).find(q => q.slug === slug);
 }
@@ -52,5 +57,5 @@ export async function validIds(): Promise<Set<string>> {
 }
 
 export async function byTopicAsync(topic: string): Promise<Question[]> {
-  return (await catalog()).filter(q => q.topic === topic);
+  return (await listed()).filter(q => q.topic === topic);
 }

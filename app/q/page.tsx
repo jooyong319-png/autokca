@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { AiRowTag } from '@/components/AiRowTag';
 import { BreadcrumbJsonLd } from '@/components/JsonLd';
 import { TOPICS } from '@/lib/questions';
-import { catalog } from '@/lib/catalog';
+import { listed } from '@/lib/catalog';
 import { SITE } from '@/lib/site';
 import styles from './archive.module.css';
 
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 export default async function QuestionIndex() {
-  const all = await catalog();
+  const all = await listed();
   return (
     <>
       <BreadcrumbJsonLd

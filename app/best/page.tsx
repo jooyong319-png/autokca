@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { AiRowTag } from '@/components/AiRowTag';
 import { BreadcrumbJsonLd } from '@/components/JsonLd';
 import { takeOf } from '@/lib/ai';
-import { catalog } from '@/lib/catalog';
+import { listed } from '@/lib/catalog';
 import { SITE } from '@/lib/site';
 import { TIER } from '@/lib/tiers';
 import { readAllTallies } from '@/lib/votes';
@@ -31,7 +31,7 @@ const MIN_VOTES = TIER.RESULT;
 export default async function BestPage() {
   const tallies = await readAllTallies();
 
-  const scored = (await catalog()).map(q => {
+  const scored = (await listed()).map(q => {
     const t = tallies.get(q.id);
     const total = t ? t.a + t.b : 0;
     const pctA = total > 0 ? (t!.a / total) * 100 : 50;
