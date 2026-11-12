@@ -23,6 +23,8 @@ export interface Draft {
   createdAt: string;
   /** 자동 발행분의 AI 답. `note` 칸에 함께 저장돼 있다(questionGuard.ts) */
   ai: AiTake | null;
+  /** "왜 갈리나" 배경 문단. 역시 `note` 칸에 있다. 없으면 빈 문자열 */
+  context: string;
 }
 
 const TOPICS = new Set([
@@ -44,7 +46,7 @@ function shape(raw: unknown): Draft | null {
   if (!TOPICS.has(r.topic as string)) return null;
   if (r.kind !== 'serious' && r.kind !== 'meme') return null;
   const createdAt = typeof r.created_at === 'string' ? r.created_at : '';
-  const { note, ai } = decodeNote(typeof r.note === 'string' ? r.note : '');
+  const { note, ai, context } = decodeNote(typeof r.note === 'string' ? r.note : '');
   return {
     id: r.id as string,
     slug: r.slug as string,
@@ -57,6 +59,7 @@ function shape(raw: unknown): Draft | null {
     note,
     createdAt,
     ai: ai && { ...ai, at: seoulDate(createdAt) },
+    context,
   };
 }
 

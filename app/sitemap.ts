@@ -5,6 +5,7 @@ import { catalog } from '@/lib/catalog';
 import { posts } from '@/lib/posts';
 import { SITE } from '@/lib/site';
 import { indexable } from '@/lib/tiers';
+import { takeOf } from '@/lib/ai';
 import { readAllTallies } from '@/lib/votes';
 
 /* 질문이 계속 늘어난다. 빌드 시각에 고정되면 새 질문이 사이트맵에 안 들어간다. */
@@ -26,7 +27,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]);
 
   const published = (await catalog()).filter(q =>
-    indexable(tallies.get(q.id) ?? EMPTY, commentCounts.get(q.id) ?? 0),
+    indexable(tallies.get(q.id) ?? EMPTY, commentCounts.get(q.id) ?? 0, q, Boolean(takeOf(q))),
   );
 
   return [

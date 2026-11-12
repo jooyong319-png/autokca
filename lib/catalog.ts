@@ -1,4 +1,5 @@
 import { QUESTIONS, RETIRED, type Question } from './questions';
+import { DRAFT_CONTEXT } from './draftContext';
 import { publishedDrafts } from './drafts';
 
 /* 사이트가 실제로 쓰는 안건 목록 = **코드 103개 + DB 발행분**.
@@ -37,6 +38,7 @@ export async function catalog(): Promise<Question[]> {
          나중에 발행한 안건이 사이트 개설일에 올라온 것처럼 표시된다. */
       published: d.createdAt || undefined,
       ai: d.ai,
+      context: d.context || DRAFT_CONTEXT[d.id] || undefined,
     });
   }
   return [...QUESTIONS, ...add];

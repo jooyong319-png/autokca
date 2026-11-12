@@ -62,7 +62,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
      사이트맵은 `readAllCommentCounts()`로 진짜 개수를 세므로 둘이 어긋났다 —
      사이트맵은 "크롤하라"는데 페이지는 `noindex`를 다는 상태였다.
      같은 판정에는 같은 입력을 쓴다. */
-  const thin = !indexable(tally, counts.a + counts.b);
+  const thin = !indexable(tally, counts.a + counts.b, question, Boolean(takeOf(question)));
 
   const canonical = `${SITE.url}/q/${encodeURIComponent(question.slug)}`;
   return {

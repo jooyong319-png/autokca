@@ -6,6 +6,7 @@ import {
   SAME_QUESTION,
   WEEKLY_LIMIT,
   checkAi,
+  checkContext,
   encodeNote,
   forbiddenWord,
   similarity,
@@ -99,7 +100,13 @@ export async function POST(request: Request) {
     const kind = str('kind');
     const note = str('note').slice(0, 200);
     const checked = checkAi(r.ai);
-    const word = forbiddenWord(q, a, b, 'ai' in checked ? checked.ai.why : '');
+    /* 배경 문단도 필수다 — 색인을 여는 조건이라(lib/tiers.ts) 없으면 검색에 안 나간다 */
+    const ctx = checkContext(r.context);
+    const word = forbiddenWord(
+      q, a, b,
+      'ai' in checked ? checked.ai.why : '',
+      'context' in ctx ? ctx.context : '',
+    );
 
     const bad =
       !ID_RE.test(id) ? 'id 형식(영문 kebab, 2~41자)' :
@@ -115,12 +122,13 @@ export async function POST(request: Request) {
       takenIds.has(id) ? '기존 질문과 id 중복' :
       takenSlugs.has(slug) ? '기존 질문과 slug 중복' :
       'error' in checked ? checked.error :
+      'error' in ctx ? ctx.error :
       word ? `금지 소재("${word}")` :
       live.some(x => similarity(x, q) >= SAME_QUESTION) ? '이미 있는 질문과 거의 같다' :
       auto && room <= 0 ? `이번 주 한도(${WEEKLY_LIMIT}개) 초과` :
       null;
 
-    if (bad || 'error' in checked) {
+    if (bad || 'error' in checked || 'error' in ctx) {
       skipped.push({ id: id || '(id 없음)', why: bad ?? '' });
       continue;
     }
@@ -135,7 +143,7 @@ export async function POST(request: Request) {
         d_b: b,
         d_topic: topic,
         d_kind: kind,
-        d_note: encodeNote(note, checked.ai),
+        d_note: encodeNote(note, checked.ai, ctx.context),
       },
       false,
     );

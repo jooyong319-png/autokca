@@ -101,10 +101,25 @@ export function showsVerdict(stage: Stage): boolean {
  *  표 조건(5)이 `RESULT`와 같은 값인 것은 우연이 아니다: 그 아래는 화면에
  *  "개표 중입니다"만 나오므로, 검색으로 들어온 사람이 **결과를 못 보는 페이지**가
  *  색인되는 셈이다. 색인을 여는 최소선은 "페이지가 제 모습을 갖춘 시점"이다. */
-export function indexable(tally: Tally, commentCount: number): boolean {
-  return (
-    tally.live && totalOf(tally) >= TIER.INDEX && commentCount >= TIER.INDEX_COMMENTS
-  );
+/** 색인을 열어도 되는가.
+ *
+ *  🔴 2026-11-12부터 길이 둘이다.
+ *    · 참여 — 표 `INDEX`개 + 댓글 `INDEX_COMMENTS`개(원래 조건)
+ *    · 본문 — **배경 문단과 AI 답이 둘 다 있다.** 참여 0명이어도 읽을 게 있는 페이지다
+ *
+ *  참여만으로 여는 동안 9주 넘게 색인이 5개에 머물렀다. 표가 쌓이려면 사람이 와야 하고
+ *  사람은 검색으로 오는데, 검색에는 표가 쌓인 페이지만 나갔다(위 INDEX 주석의 닭-달걀).
+ *  ⚠️ 질문 한 줄 + AI 한마디만으로는 열지 않는다. 그건 대량 생산한 얇은 페이지로 읽힌다.
+ *     논쟁의 구도를 설명하는 문단이 있어야 한다. */
+export function indexable(
+  tally: Tally,
+  commentCount: number,
+  question?: { context?: string },
+  hasAi?: boolean,
+): boolean {
+  const joined = tally.live && totalOf(tally) >= TIER.INDEX && commentCount >= TIER.INDEX_COMMENTS;
+  const written = Boolean(question?.context) && Boolean(hasAi);
+  return joined || written;
 }
 
 /** 결과 자리에 들어갈 한 줄. 단계와 "내가 투표했는가"에 따라 갈린다.

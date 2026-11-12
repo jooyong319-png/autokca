@@ -3,6 +3,7 @@ import { catalog } from '@/lib/catalog';
 import { readAllCommentCounts } from '@/lib/comments';
 import { QUESTIONS } from '@/lib/questions';
 import { TIER, indexable } from '@/lib/tiers';
+import { takeOf } from '@/lib/ai';
 import { readAllTallies } from '@/lib/votes';
 
 export const runtime = 'nodejs';
@@ -40,7 +41,7 @@ export async function GET() {
   for (const t of tallies.values()) votes += t.a + t.b;
 
   const indexed = all.filter(q =>
-    indexable(tallies.get(q.id) ?? EMPTY, commentCounts.get(q.id) ?? 0),
+    indexable(tallies.get(q.id) ?? EMPTY, commentCounts.get(q.id) ?? 0, q, Boolean(takeOf(q))),
   ).length;
 
   return NextResponse.json({

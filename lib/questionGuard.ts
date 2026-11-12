@@ -14,13 +14,14 @@ import type { AiTake } from './ai';
 /** 규칙 4(성별 갈등·정치 진영·종교). 애매하면 막는다 — 오탐은 다음 주 다른 소재로 메워진다. */
 const OFF_LIMITS = [
   '남자', '여자', '남성', '여성', '남녀', '페미', '한남', '김치녀', '군필', '군대', '군복무', '군 복무',
-  '대통령', '국회', '정당', '여당', '야당', '민주당', '국민의힘', '좌파', '우파', '보수', '진보', '탄핵', '선거',
+  '대통령', '국회', '정당 지지', '여당', '야당', '민주당', '국민의힘', '좌파', '우파', '보수', '진보', '탄핵', '선거',
   '기독교', '천주교', '불교', '이슬람', '교회', '목사', '스님', '종교',
   '전라도', '경상도', '장애인', '외국인', '조선족', '동성애',
 ];
-/** 욕설·성인·도박(lib/comments.ts의 금칙어와 같은 범위) */
+/** 욕설·성인·도박. lib/comments.ts의 금칙어에서 **두 글자 성기 비속어는 뺐다** —
+ *  "가 보지 못한", "자지 않고"처럼 평범한 문장에 들어가 문단이 통째로 거절된다(실측). */
 const BANNED = [
-  '씨발', '시발', '새끼', '병신', '지랄', '좆', '보지', '자지', '섹스', '야동', '도박', '카지노', '토토',
+  '씨발', '시발', '새끼', '병신', '지랄', '좆', '섹스', '야동', '도박', '카지노', '토토',
 ];
 
 export function forbiddenWord(...texts: string[]): string | null {
@@ -75,18 +76,35 @@ export function checkAi(raw: unknown): { ai: AiFields } | { error: string } {
  *    사람이 실행해야 한다). "사람 손 없이"가 요구사항이라 이미 있는 칸을 쓴다.
  *    나중에 칼럼으로 옮겨도 이 두 함수만 고치면 된다. */
 const AI_MARK = '\n@ai ';
+/** 배경 문단은 AI 답 **앞**에 둔다. AI 답이 항상 맨 끝 한 줄(JSON)이어야 잘라 읽기 쉽다 */
+const CONTEXT_MARK = '\n@ctx ';
 
-export function encodeNote(note: string, ai: AiFields): string {
-  return `${note}${AI_MARK}${JSON.stringify(ai)}`;
+export function encodeNote(note: string, ai: AiFields, context = ''): string {
+  return `${note}${context ? CONTEXT_MARK + context : ''}${AI_MARK}${JSON.stringify(ai)}`;
 }
 
-export function decodeNote(stored: string): { note: string; ai: AiFields | null } {
+export function decodeNote(stored: string): { note: string; ai: AiFields | null; context: string } {
   const at = stored.indexOf(AI_MARK);
-  if (at < 0) return { note: stored, ai: null };
+  const body = at < 0 ? stored : stored.slice(0, at);
+  const c = body.indexOf(CONTEXT_MARK);
+  const note = c < 0 ? body : body.slice(0, c);
+  const context = c < 0 ? '' : body.slice(c + CONTEXT_MARK.length).trim();
+  if (at < 0) return { note, ai: null, context };
   try {
     const parsed = checkAi(JSON.parse(stored.slice(at + AI_MARK.length)));
-    return { note: stored.slice(0, at), ai: 'ai' in parsed ? parsed.ai : null };
+    return { note, ai: 'ai' in parsed ? parsed.ai : null, context };
   } catch {
-    return { note: stored.slice(0, at), ai: null };
+    return { note, ai: null, context };
   }
+}
+
+/** 배경 문단 검사(규칙은 `Question.context` 주석). 🔴 사실 주장을 막는다 — 출처 없는 숫자는 지어낸 숫자다 */
+export function checkContext(raw: unknown): { context: string } | { error: string } {
+  const text = typeof raw === 'string' ? raw.replace(/\s+/g, ' ').trim() : '';
+  if (text.length < 60 || text.length > 260) return { error: 'context는 60~260자' };
+  if (/평균|통계|조사에 따르면|연구에 따르면|\d+\s*(%|퍼센트)/.test(text)) {
+    return { error: 'context에 사실·수치 주장(구도만 써라)' };
+  }
+  if (/[?？!]$/.test(text) || /요[.!?]?$/.test(text)) return { error: 'context는 차분한 평서문(~다)' };
+  return { context: text };
 }
